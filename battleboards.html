@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Boards | NoFreeThinkers</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(40px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-950 text-gray-100 h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+    <div class="bg-glow top-[-10%] left-[-10%] animate-pulse"></div>
+    <div class="bg-glow bottom-[-10%] right-[-10%] animate-pulse" style="animation-duration: 8s;"></div>
+
+    <header class="glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div
+                    class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-black shadow-lg shadow-amber-500/20">
+                    NFT
+                </div>
+                <span class="text-xl font-bold tracking-wider text-amber-400 uppercase">NoFreeThinkers</span>
+            </div>
+
+            <nav class="hidden md:flex space-x-6 lg:space-x-8 text-sm font-medium tracking-wide">
+                <a href="index.html" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Home</a>
+                <a href="index.html#stats"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Guild Stats</a>
+                <a href="members.html"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Members</a>
+                <a href="build.html"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Builds</a>
+                <a href="#" class="text-amber-400 border-b-2 border-amber-400 pb-1">Battle Boards</a>
+                <a href="Lootlogger.html" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Loot
+                    Logger</a>
+                <a href="index.html#community"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Community</a>
+            </nav>
+
+            <div class="flex items-center">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-xs font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-amber-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-600 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-amber-800 mt-2">
+                    <span
+                        class="relative px-4 py-2 transition-all ease-in duration-75 bg-gray-950 rounded-md group-hover:bg-opacity-0">
+                        <i class="fab fa-discord mr-1 text-amber-400 group-hover:text-white"></i> JOIN DISCORD
+                    </span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main
+        class="flex-1 overflow-y-auto pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col space-y-8">
+
+        <section class="text-center md:text-left space-y-2 py-4">
+            <div
+                class="inline-flex items-center space-x-2 bg-red-500/10 border border-red-500/20 px-3 py-1 rounded-full text-xs font-semibold text-red-400 uppercase tracking-widest">
+                <i class="fas fa-crosshairs"></i> Outlands Combat Records
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-md">
+                Battle <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-orange-400 to-amber-500">Boards</span>
+            </h1>
+            <p class="text-gray-400 text-sm sm:text-base max-w-xl leading-relaxed">
+                Review operational diagnostics, track player compositions, and inspect recent warfare engagements.
+            </p>
+        </section>
+
+        <div id="log-loading"
+            class="flex flex-col items-center justify-center space-y-4 py-12 transition-all duration-300">
+            <div class="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-lg font-medium text-gray-400 tracking-wide">Compiling Outlands Transcripts...</p>
+        </div>
+
+        <div id="battleboards-container" class="hidden space-y-6">
+            <div class="overflow-hidden glass-panel rounded-2xl shadow-xl border border-gray-800">
+                <div
+                    class="p-6 bg-gray-900/40 border-b border-gray-800/80 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-white tracking-wide">Operational Logs</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Most recent tracked guild operations across zones.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <div
+                            class="flex items-center space-x-2 bg-gray-950/60 border border-gray-800 px-3 py-1.5 rounded-lg text-xs w-full sm:w-auto">
+                            <span class="text-gray-400 font-medium"><i class="fas fa-users mr-1 text-amber-500/80"></i>
+                                Min Event Players:</span>
+                            <input id="filter-total-players" type="number" min="0" placeholder="Type a number..."
+                                onkeydown="if(event.key==='.'){event.preventDefault();}"
+                                oninput="this.value=this.value.replace(/[^0-9]/g,''); handleLiveFilterChange();"
+                                class="bg-transparent text-amber-400 font-bold focus:outline-none placeholder-gray-600 w-28 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="border-b border-gray-800 text-xs text-amber-500 font-bold uppercase tracking-wider bg-gray-900/20">
+                                <th class="p-4 w-12 text-center">Select</th>
+                                <th class="p-4">Battle ID & Date (UTC)</th>
+                                <th class="p-4">Guild Name</th>
+                                <th class="p-4 text-center">Total Kills</th>
+                                <th class="p-4 text-center">Total Deaths</th>
+                                <th class="p-4">Guild Kill Fame</th>
+                                <th class="p-4 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="battle-rows" class="divide-y divide-gray-900 text-sm">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 bg-gray-900/20 border-t border-gray-800 flex items-center justify-between text-xs">
+                    <span id="pagination-info" class="text-gray-400 font-medium">Showing 0-0 of 0 logs</span>
+                    <div class="flex space-x-2">
+                        <button id="btn-prev" onclick="changePage(-1)"
+                            class="px-3 py-1.5 rounded bg-gray-900 border border-gray-800 text-gray-300 hover:text-amber-400 disabled:opacity-40 disabled:hover:text-gray-300 font-bold transition-all cursor-pointer disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-1"></i> Prev
+                        </button>
+                        <button id="btn-next" onclick="changePage(1)"
+                            class="px-3 py-1.5 rounded bg-gray-900 border border-gray-800 text-gray-300 hover:text-amber-400 disabled:opacity-40 disabled:hover:text-gray-300 font-bold transition-all cursor-pointer disabled:cursor-not-allowed">
+                            Next <i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-fallback-panel"
+            class="hidden max-w-2xl mx-auto glass-panel p-8 rounded-2xl border border-red-500/20 bg-red-950/5 space-y-4 text-center">
+            <div class="flex items-center justify-center space-x-3 text-red-400">
+                <i class="fas fa-triangle-exclamation text-2xl"></i>
+                <h3 class="text-lg font-black tracking-wide">Chronicle Data Unreadable</h3>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">
+                Could not retrieve secure data records from <span
+                    class="text-amber-400 font-mono">battle-data.json</span>. Verify that your GitHub Actions automated
+                routine has run successfully and generated the target dataset file in your repository.
+            </p>
+        </div>
+    </main>
+
+    <div id="multi-select-banner"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl transition-all duration-300 transform translate-y-32 opacity-0 pointer-events-none">
+        <div
+            class="glass-panel border-amber-500/30 shadow-2xl shadow-amber-500/5 rounded-xl p-4 flex items-center justify-between bg-gray-950/90 backdrop-blur-md">
+            <div class="flex items-center space-x-3">
+                <div
+                    class="w-8 h-8 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm font-bold border border-amber-500/20">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div>
+                    <p id="multi-select-count" class="text-sm font-bold text-white">2 Battleboards Selected</p>
+                    <p class="text-[11px] text-gray-400">Ready to execute cross-match analytical evaluation.</p>
+                </div>
+            </div>
+            <button onclick="navigateToMultiBoards()"
+                class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-gray-950 font-black text-xs tracking-wider px-4 py-2.5 rounded-lg shadow-lg shadow-amber-500/10 transition-all cursor-pointer uppercase">
+                See Multiple Battleboards <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <footer class="glass-nav mt-auto w-full py-6">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 space-y-4 sm:space-y-0">
+            <div>
+                &copy; 2026 <span class="text-gray-400 font-medium">NoFreeThinkers</span>. Built for the Albion Online
+                community.
+            </div>
+            <div>
+                &copy; 2026 Built By:<span class="text-gray-400 font-medium">LelouchYT(Raymen_Shr)</span>.
+            </div>
+            <div class="flex space-x-6 text-base">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="hover:text-indigo-400 transition-colors"><i class="fab fa-discord"></i></a>
+                <a href="https://gameinfo.albiononline.com" target="_blank"
+                    class="hover:text-amber-400 transition-colors"><i class="fas fa-database"></i></a>
+            </div>
+            <div class="text-right tracking-wide">
+                Data fetches securely via <span class="text-amber-500/70 font-mono">GitHub Actions</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const TARGET_GUILD_ID = "AIbIw4erSVyHg9Ab6LVtdA";
+        const localJsonUrl = `battle-data.json?t=${Date.now()}`;
+
+        let allBattlesCache = [];
+        let filteredBattles = [];
+        let currentPage = 1;
+        const rowsPerPage = 15;
+        let selectedBattleIds = new Set();
+
+        function formatCompactFame(num) {
+            if (!num || isNaN(num)) return "0";
+            const val = parseFloat(num);
+            if (val >= 1e12) return (val / 1e12).toFixed(2) + 'T';
+            if (val >= 1e9) return (val / 1e9).toFixed(2) + 'B';
+            if (val >= 1e6) return (val / 1e6).toFixed(2) + 'M';
+            return val.toLocaleString();
+        }
+
+        function formatDateString(isoString) {
+            try {
+                const d = new Date(isoString);
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`;
+            } catch (e) { return "Recent Match"; }
+        }
+
+        function applyFilters() {
+            const inputElement = document.getElementById('filter-total-players');
+            const minTotalPlayers = (inputElement && inputElement.value !== "") ? parseInt(inputElement.value, 10) : 0;
+
+            if (isNaN(minTotalPlayers) || minTotalPlayers <= 0) {
+                filteredBattles = [...allBattlesCache];
+            } else {
+                filteredBattles = allBattlesCache.filter(battle => {
+                    // Safeguard against missing data structures
+                    if (!battle.players) return false;
+                    const totalEventPlayerCount = Object.keys(battle.players).length;
+                    return totalEventPlayerCount >= minTotalPlayers;
+                });
+            }
+        }
+
+        function handleLiveFilterChange() {
+            currentPage = 1;
+            applyFilters();
+            displayCurrentPage();
+        }
+
+        function displayCurrentPage() {
+            const tbody = document.getElementById('battle-rows');
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            if (filteredBattles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-xs text-gray-500 italic">No historical operational logs uncovered within this filtered timeframe.</td></tr>`;
+                updatePaginationControls();
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredBattles.length);
+            const pageSlice = filteredBattles.slice(startIndex, endIndex);
+
+            pageSlice.forEach(battle => {
+                let targetGuildName = "NoFreeThinkers";
+                let computedKills = 0;
+                let computedDeaths = 0;
+                let computedFame = 0;
+
+                // Extract metrics cleanly directly from the new mapped guild entries object
+                if (battle.guilds && battle.guilds[TARGET_GUILD_ID]) {
+                    const gData = battle.guilds[TARGET_GUILD_ID];
+                    targetGuildName = gData.name || targetGuildName;
+                    computedKills = gData.kills || 0;
+                    computedDeaths = gData.deaths || 0;
+                    computedFame = gData.killFame || 0;
+                } else if (battle.players) {
+                    // Fallback compilation method from player list map if guild array summary blocks are missing
+                    Object.values(battle.players).forEach(player => {
+                        if (player.guildId === TARGET_GUILD_ID) {
+                            if (player.guildName) targetGuildName = player.guildName;
+                            computedKills += (player.kills || 0);
+                            computedDeaths += (player.deaths || 0);
+                            computedFame += (player.killFame || 0);
+                        }
+                    });
+                }
+
+                const isChecked = selectedBattleIds.has(battle.id) ? 'checked' : '';
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-900/30 transition-colors border-b border-gray-900/60 text-gray-300";
+                row.innerHTML = `
+                <td class="p-4 text-center">
+                    <input type="checkbox" data-id="${battle.id}" ${isChecked} onchange="toggleBattleSelection(this, '${battle.id}')" class="w-4 h-4 rounded border-gray-800 bg-gray-950 text-amber-500 accent-amber-500 focus:ring-0 cursor-pointer">
+                </td>
+                <td class="p-4 font-medium text-gray-200">
+                    <span class="block text-white font-bold">#${battle.id}</span>
+                    <span class="text-xs text-gray-500 font-mono">${formatDateString(battle.startTime)}</span>
+                </td>
+                <td class="p-4 font-bold text-amber-400 tracking-wide">
+                    ${targetGuildName}
+                </td>
+                <td class="p-4 text-center font-extrabold text-emerald-400">
+                    ${computedKills}
+                </td>
+                <td class="p-4 text-center font-extrabold text-red-400">
+                    ${computedDeaths}
+                </td>
+                <td class="p-4 font-black text-gray-100">
+                    ${formatCompactFame(computedFame)}
+                </td>
+                <td class="p-4 text-center">
+                    <a href="battleboard-detail.html?id=${battle.id}" class="inline-flex items-center justify-center bg-gray-900 hover:bg-amber-500 border border-amber-500/20 text-xs font-bold text-amber-400 hover:text-black px-3 py-1.5 rounded-lg transition-all shadow-md">
+                        Check Battleboard <i class="fas fa-chart-line ml-1.5 text-[10px]"></i>
+                    </a>
+                </td>
+            `;
+                tbody.appendChild(row);
+            });
+
+            updatePaginationControls(startIndex, endIndex);
+        }
+
+        function updatePaginationControls(start = 0, end = 0) {
+            const total = filteredBattles.length;
+            const totalPages = Math.ceil(total / rowsPerPage) || 1;
+
+            const infoEl = document.getElementById('pagination-info');
+            if (infoEl) {
+                infoEl.innerText = total > 0
+                    ? `Showing ${start + 1}-${end} of ${total} logs (Page ${currentPage}/${totalPages})`
+                    : `Showing 0-0 of 0 logs`;
+            }
+
+            const prevBtn = document.getElementById('btn-prev');
+            const nextBtn = document.getElementById('btn-next');
+            if (prevBtn) prevBtn.disabled = (currentPage === 1);
+            if (nextBtn) nextBtn.disabled = (currentPage === totalPages || total === 0);
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            displayCurrentPage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleBattleSelection(checkbox, battleId) {
+            if (checkbox.checked) {
+                selectedBattleIds.add(battleId);
+            } else {
+                selectedBattleIds.delete(battleId);
+            }
+            updateMultiSelectBanner();
+        }
+
+        function updateMultiSelectBanner() {
+            const banner = document.getElementById('multi-select-banner');
+            const countText = document.getElementById('multi-select-count');
+            if (!banner || !countText) return;
+
+            const totalSelected = selectedBattleIds.size;
+
+            if (totalSelected >= 2) {
+                countText.innerText = `${totalSelected} Battleboards Selected`;
+                banner.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
+            } else {
+                banner.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function navigateToMultiBoards() {
+            const idArray = Array.from(selectedBattleIds);
+            const queryParam = idArray.join(',');
+            window.location.href = `multi-battleboards.html?ids=${queryParam}`;
+        }
+
+        async function initFetchWorkflow() {
+            try {
+                const res = await fetch(localJsonUrl);
+                if (!res.ok) throw new Error(`HTTP Error Status: ${res.status}`);
+                let rawData = await res.json();
+
+                // Accept the data array directly, ensuring it is formatted right
+                let parsedData = Array.isArray(rawData) ? rawData : [];
+
+                // Sort battles reverse chronologically by default
+                parsedData.sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
+
+                allBattlesCache = parsedData;
+                applyFilters();
+
+                document.getElementById('log-loading').classList.add('hidden');
+                document.getElementById('battleboards-container').classList.remove('hidden');
+
+                displayCurrentPage();
+            } catch (err) {
+                console.error("Workflow tracking payload acquisition mismatch:", err.message);
+                document.getElementById('log-loading').classList.add('hidden');
+                document.getElementById('error-fallback-panel').classList.remove('hidden');
+            }
+        }
+
+        initFetchWorkflow();
+    </script>
+</body>
+
+</html>

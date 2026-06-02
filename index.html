@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoFreeThinkers | Albion Online Guild</title>
+
+    <meta name="title" content="NoFreeThinkers | Albion Online Guild">
+    <meta name="description"
+        content="A dedicated Outlands brotherhood forging our legacy in Albion Online. View active roster statistics, custom ZvZ builds, and combat analytics telemetry charts.">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://albionnft.github.io/NFT/">
+    <meta property="og:title" content="NoFreeThinkers | Albion Online Guild">
+    <meta property="og:description"
+        content="A dedicated Outlands brotherhood forging our legacy in Albion Online. View active roster statistics, custom ZvZ builds, and combat analytics telemetry charts.">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://albionnft.github.io/NFT/thumbnail.png">
+
+    <meta property="og:image" content="https://albionnft.github.io/NFT/banner.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="160">
+    <meta property="og:image:height" content="160">
+
+    <meta name="theme-color" content="#fbbf24">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles to handle smooth glassmorphism effects */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-banner {
+            background: rgba(217, 119, 6, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.15);
+        }
+
+        /* Animated ambient background spots */
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(40px);
+        }
+
+        /* Hover Sticky Automation Drawer Widget Styling */
+        .automation-drawer {
+            transform: translateX(-208px);
+            /* Hides panel body context cleanly off-viewport */
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .automation-drawer:hover,
+        .automation-drawer:focus-within {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+
+    <div class="bg-glow top-[-10%] left-[-10%] animate-pulse"></div>
+    <div class="bg-glow bottom-[-10%] right-[-10%] animate-pulse" style="animation-duration: 8s;"></div>
+
+    <div class="automation-drawer fixed left-0 top-1/3 z-50 flex items-center">
+        <div class="glass-panel w-52 p-4 rounded-r-xl border-l-0 shadow-2xl space-y-3">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                <span class="text-[10px] font-bold text-amber-400 tracking-widest uppercase">Live Activity</span>
+                <span class="flex h-2 w-2 relative">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+            </div>
+            <div id="side-feed-automation" class="text-[11px] text-gray-400 space-y-2 max-h-52 overflow-y-auto pr-1">
+                <p class="italic text-gray-500 animate-pulse">Awaiting feed parsing...</p>
+            </div>
+        </div>
+        <div
+            class="glass-panel py-4 px-2 rounded-r-lg border-l-0 cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 transition-colors flex flex-col items-center justify-center gap-2 shadow-xl">
+            <i class="fas fa-bolt text-amber-400 animate-bounce text-xs"></i>
+            <span
+                class="text-[9px] font-black tracking-widest text-amber-400 [writing-mode:vertical-lr] uppercase">KILLS</span>
+        </div>
+    </div>
+
+    <div class="fixed top-0 left-0 w-full z-50 flex flex-col">
+        <header class="glass-nav w-full">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-black shadow-lg shadow-amber-500/20">
+                        NFT
+                    </div>
+                    <span class="text-xl font-bold tracking-wider text-amber-400 uppercase">NoFreeThinkers</span>
+                </div>
+
+                <nav class="hidden md:flex space-x-6 lg:space-x-8 text-sm font-medium tracking-wide">
+                    <a href="#" class="text-amber-400 border-b-2 border-amber-400 pb-1">Home</a>
+                    <a href="#stats" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Guild
+                        Stats</a>
+                    <a href="members.html"
+                        class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Members</a>
+                    <a href="build.html"
+                        class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Builds</a>
+                    <a href="battleboards.html"
+                        class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Battle Boards</a>
+                    <a href="Lootlogger.html"
+                        class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Loot Logger</a>
+                    <a href="#community"
+                        class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Community</a>
+                </nav>
+
+                <div class="flex items-center" id="auth-btn-wrapper">
+                    <a id="auth-nav-btn" href="https://discord.gg/yEegm7mdRT"
+                        class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-xs font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-amber-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-600 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-amber-800 mt-2">
+                        <span
+                            class="relative px-4 py-2 transition-all ease-in duration-75 bg-gray-950 rounded-md group-hover:bg-opacity-0">
+                            <i class="fab fa-discord mr-1 text-amber-400 group-hover:text-white"></i> DISCORD JOIN
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="glass-banner w-full py-2 px-4 shadow-md flex items-center justify-center">
+            <div id="cta-banner-content"
+                class="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-4 text-center">
+                <div class="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+    </div>
+
+    <main
+        class="flex-grow pt-36 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col items-center justify-center">
+
+        <div id="loading" class="flex flex-col items-center justify-center space-y-4 py-12 transition-all duration-300">
+            <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-lg font-medium text-gray-400 tracking-wide">Querying Royal Archives...</p>
+        </div>
+
+        <div id="guild-card"
+            class="w-full space-y-12 hidden transition-all duration-500 opacity-0 transform translate-y-4">
+
+            <section class="text-center max-w-3xl mx-auto space-y-4">
+                <div
+                    class="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-semibold text-amber-400 uppercase tracking-widest">
+                    <i class="fas fa-shield-halved"></i> Active Albion Guild
+                </div>
+                <h1 id="guild-title-display"
+                    class="text-4xl sm:text-6xl font-black tracking-tight text-white drop-shadow-md">
+                    We Are <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500">NoFreeThinkers</span>
+                </h1>
+                <p class="text-gray-400 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
+                    United we stand, divided we try to eat our own tails. Let us stay united.
+                </p>
+            </section>
+
+            <section id="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+                <div
+                    class="glass-panel p-6 rounded-2xl shadow-xl flex flex-col justify-between hover:border-amber-500/30 transition-all duration-300 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-wider text-amber-500 font-bold">Guild Info</span>
+                        <i class="fas fa-flag text-gray-500 group-hover:text-amber-400 transition-colors"></i>
+                    </div>
+                    <div>
+                        <h2 id="guild-name" class="text-2xl font-extrabold text-white tracking-wide truncate">-</h2>
+                        <p id="alliance-name" class="text-gray-400 text-sm mt-1 italic tracking-wide truncate">-</p>
+                    </div>
+                </div>
+
+                <div
+                    class="glass-panel p-6 rounded-2xl shadow-xl flex flex-col justify-between hover:border-amber-500/30 transition-all duration-300 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-wider text-amber-500 font-bold">Guild Size</span>
+                        <i class="fas fa-users text-gray-500 group-hover:text-amber-400 transition-colors"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="member-count" class="text-4xl font-black text-white">250+</span>
+                            <span class="text-gray-400 text-sm font-medium">Warriors</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Actively recruiting active players</p>
+                    </div>
+                </div>
+
+                <div
+                    class="glass-panel p-6 rounded-2xl shadow-xl flex flex-col justify-between hover:border-amber-500/30 transition-all duration-300 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-wider text-amber-500 font-bold">Total Kill Fame</span>
+                        <i class="fas fa-skull text-gray-500 group-hover:text-red-400 transition-colors"></i>
+                    </div>
+                    <div>
+                        <h2 id="kill-fame" class="text-3xl font-black text-red-400 tracking-wide">-</h2>
+                        <p class="text-xs text-gray-500 mt-1">Total Kill Fame Earned till Date</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="leaderboard-section" class="max-w-5xl mx-auto w-full">
+                <div class="glass-panel rounded-2xl p-6 shadow-xl border border-amber-500/10">
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-800 pb-4 mb-4 gap-2">
+                        <div>
+                            <h3 class="text-xl font-bold text-white tracking-wide flex items-center gap-2">
+                                <i class="fas fa-trophy text-amber-400"></i> Top Weekly Outlands Kills
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Ranked by Total Kill Fame Value</p>
+                        </div>
+                        <span
+                            class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] px-2.5 py-1 rounded-md font-bold tracking-widest uppercase">
+                            Outlands Cluster
+                        </span>
+                    </div>
+
+                    <div class="w-full">
+                        <div
+                            class="grid grid-cols-12 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-900 pb-3 font-semibold px-4">
+                            <div class="col-span-1 text-center">Rank</div>
+                            <div class="col-span-5 pl-11">Killer Info</div>
+                            <div class="col-span-3">Victim Name</div>
+                            <div class="col-span-3 text-right">Kill Fame</div>
+                        </div>
+
+                        <div id="kills-leaderboard-container" class="divide-y divide-gray-900/50 mt-2">
+                            <p class="text-center py-8 text-xs text-gray-500 tracking-wide italic">No high priority
+                                targets eliminated yet this week.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="community"
+                class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-center space-y-4">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                        <h3 class="text-2xl font-bold text-white tracking-wide">Recruiting Requirements</h3>
+                        <span
+                            class="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-1 rounded font-bold uppercase tracking-wider border border-emerald-500/20">Open</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3 bg-gray-900/40 p-2.5 rounded-lg border border-gray-800">
+                            <i class="fas fa-skull text-red-500 text-lg w-6 text-center"></i>
+                            <div>
+                                <p class="text-sm font-bold text-gray-200">25m Kill Fame Minimum</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-3 bg-gray-900/40 p-2.5 rounded-lg border border-gray-800">
+                            <i class="fas fa-gavel text-amber-500 text-lg w-6 text-center mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-bold text-gray-200">Max Spec ZvZ Build Required</p>
+                                <p class="text-xs text-gray-400 mt-0.5">Must actively be working on a secondary gear
+                                    layout.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <p class="text-xs font-semibold text-amber-500 uppercase tracking-widest mb-2">Combat Power
+                            Thresholds</p>
+                        <div class="grid grid-cols-2 gap-3 text-center">
+                            <div class="bg-gray-900/60 border border-gray-800 p-2 rounded-xl">
+                                <span class="block text-[10px] uppercase text-gray-400 tracking-wider">DPS Role</span>
+                                <span class="text-sm font-black text-white">1500+ IP <span
+                                        class="text-xs text-gray-500 font-normal">before OC</span></span>
+                            </div>
+                            <div class="bg-gray-900/60 border border-gray-800 p-2 rounded-xl">
+                                <span class="block text-[10px] uppercase text-gray-400 tracking-wider">All Other
+                                    Roles</span>
+                                <span class="text-sm font-black text-white">1450+ IP <span
+                                        class="text-xs text-gray-500 font-normal">before OC</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-500 italic text-center pt-2 border-t border-gray-900">
+                        * Exceptions can be reviewed given a valid vouch from an existing member.
+                    </p>
+                </div>
+
+                <div
+                    class="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 border border-indigo-500/20 bg-indigo-950/10">
+                    <div
+                        class="w-16 h-16 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
+                        <i class="fab fa-discord"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-white">Join Discord To Apply</h4>
+                        <p class="text-xs text-indigo-300/70 mt-1">To Join The Guild You Need To Apply Via Discord</p>
+                    </div>
+                    <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-indigo-600/20 text-sm tracking-wider">
+                        ENTER DISCORD TO APPLY
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="glass-nav mt-auto w-full py-6">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 space-y-4 sm:space-y-0">
+            <div>
+                &copy; 2026 <span class="text-gray-400 font-medium">NoFreeThinkers</span>. Built for the Albion Online
+                community.
+            </div>
+            <div>
+                &copy; 2026 Built By:<span class="text-gray-400 font-medium">LelouchYT(Raymen_Shr)</span>.
+            </div>
+            <div class="flex space-x-6 text-base">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="hover:text-indigo-400 transition-colors"><i class="fab fa-discord"></i></a>
+                <a href="https://gameinfo.albiononline.com" target="_blank"
+                    class="hover:text-amber-400 transition-colors"><i class="fas fa-database"></i></a>
+            </div>
+            <div class="text-right tracking-wide">
+                Data fetches securely via <span class="text-amber-500/70 font-mono">GitHub Actions</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const authBtn = document.getElementById("auth-nav-btn");
+            const navContainer = document.querySelector("nav");
+
+            try {
+                const response = await fetch("https://nofreethinkers.gaming07center.workers.dev/functions/check-session", {
+                    credentials: "include"
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+
+                    if (userData.loggedIn && navContainer) {
+                        const buildsLink = document.createElement("a");
+                        buildsLink.href = "build.html";
+                        buildsLink.className = "text-gray-300 hover:text-amber-400 transition-colors duration-200 font-medium";
+                        buildsLink.textContent = "Builds";
+
+                        const regearLink = document.createElement("a");
+                        regearLink.href = "regear.html";
+                        regearLink.className = "text-gray-300 hover:text-amber-400 transition-colors duration-200 font-medium";
+                        regearLink.textContent = "Regear";
+
+                        navContainer.appendChild(buildsLink);
+                        navContainer.appendChild(regearLink);
+                    }
+
+                    if (userData.loggedIn && authBtn) {
+                        authBtn.href = "#";
+                        authBtn.innerHTML = `
+                            <span class="relative px-4 py-2 transition-all ease-in duration-75 bg-gray-950 rounded-md group-hover:bg-opacity-0 text-emerald-400 flex items-center gap-2">
+                                <i class="fab fa-discord"></i> LOGGED IN AS ${userData.username.toUpperCase()}
+                            </span>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error("Auth check failed:", error);
+            }
+
+            const loader = document.getElementById("loading");
+            const content = document.getElementById("guild-card");
+            if (loader && content) {
+                loader.classList.add("hidden");
+                content.classList.remove("hidden");
+                setTimeout(() => {
+                    content.classList.remove("opacity-0", "translate-y-4");
+                }, 50);
+            }
+        });
+
+        const githubUser = 'AlbionNFT';
+        const repoName = 'NFT';
+        const localJsonUrl = `/guild-data.json?t=${Date.now()}`;
+        const topKillsJsonUrl = `/top-kills.json?t=${Date.now()}`;
+
+        function formatCompactFame(num) {
+            if (!num || isNaN(num)) return "0";
+            const rawValue = parseFloat(num);
+            if (rawValue >= 1e12) return (rawValue / 1e12).toFixed(2) + 'Trillion';
+            if (rawValue >= 1e9) return (rawValue / 1e9).toFixed(2) + 'Billion';
+            if (rawValue >= 1e6) return (rawValue / 1e6).toFixed(2) + 'Million';
+            return rawValue.toLocaleString();
+        }
+
+        function formatLeaderboardFame(num) {
+            if (!num || isNaN(num)) return "0";
+            const rawValue = parseFloat(num);
+            if (rawValue >= 1e6) return (rawValue / 1e6).toFixed(2) + 'M';
+            if (rawValue >= 1e3) return (rawValue / 1e3).toFixed(1) + 'K';
+            return rawValue.toLocaleString();
+        }
+
+        // AUTOMATED REUSABLE STREAM FILTER FOR THE FLOATING SIDE WIDGET
+        function populateAutomatedSideFeed(killArray) {
+            const sideContainer = document.getElementById('side-feed-automation');
+            if (!sideContainer || !killArray || !killArray.length) return;
+
+            sideContainer.innerHTML = ''; // Wipe loading placeholder safely
+
+            // Filters/slices out top items automatically without embedded requirements
+            killArray.slice(0, 5).forEach(kill => {
+                const row = document.createElement('div');
+                row.className = "p-2 bg-gray-900/40 rounded border border-gray-800/40 hover:border-amber-500/20 transition-all text-[11px] leading-snug";
+
+                const killerName = kill.Killer?.Name || "Striker";
+                const victimName = kill.Victim?.Name || "Target";
+                const fameValue = formatLeaderboardFame(kill.TotalKillFame || kill.Killer?.KillFame || 0);
+
+                row.innerHTML = `
+                    <div class="flex justify-between items-center text-[10px] text-gray-500 font-mono mb-0.5">
+                        <span>⚔️ PvP Slip</span>
+                        <span class="text-red-400 font-bold">${fameValue}</span>
+                    </div>
+                    <div class="truncate text-gray-200"><b class="text-amber-400 font-semibold">${killerName}</b> downed ${victimName}</div>
+                `;
+                sideContainer.appendChild(row);
+            });
+        }
+
+        function renderLeaderboard(killArray) {
+            const container = document.getElementById('kills-leaderboard-container');
+            if (!killArray || !killArray.length) return;
+
+            const sortedKills = [...killArray].sort((a, b) => {
+                const fameA = parseFloat(a.TotalKillFame || a.Killer?.KillFame || 0);
+                const fameB = parseFloat(b.TotalKillFame || b.Killer?.KillFame || 0);
+                return fameB - fameA;
+            });
+
+            let htmlContent = '';
+
+            sortedKills.forEach((killEvent, index) => {
+                const position = index + 1;
+                const killer = killEvent.Killer || {};
+                const killerName = killer.Name || "Unknown Killer";
+                const rawIp = killer.AverageItemPower || 0;
+                const itemPower = Math.round(rawIp);
+
+                const mainHandItem = killer.Equipment?.MainHand?.Type || "";
+                let weaponIconUrl = "";
+                if (mainHandItem) {
+                    weaponIconUrl = `https://render.albiononline.com/v1/item/${mainHandItem}.png?size=40`;
+                }
+
+                const victimName = killEvent.Victim?.Name || "Unknown Victim";
+                const targetRawFame = killEvent.TotalKillFame || killer.KillFame || 0;
+                const calculatedFame = formatLeaderboardFame(targetRawFame);
+
+                let placementVisual = `<span class="text-gray-500 font-mono text-sm font-bold">${position}</span>`;
+                if (position === 1) placementVisual = `<i class="fas fa-crown text-amber-400 text-sm drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]"></i>`;
+                if (position === 2) placementVisual = `<i class="fas fa-medal text-slate-300 text-sm"></i>`;
+                if (position === 3) placementVisual = `<i class="fas fa-medal text-amber-700 text-sm"></i>`;
+
+                htmlContent += `
+                        <div class="grid grid-cols-12 items-center py-3.5 px-4 hover:bg-gray-900/30 transition-colors duration-150 group">
+                            <div class="col-span-1 text-center">${placementVisual}</div>
+                            
+                            <div class="col-span-5 flex items-center space-x-3 truncate pr-2">
+                                ${weaponIconUrl ? `<img src="${weaponIconUrl}" alt="weapon" class="w-8 h-8 rounded bg-gray-900 border border-gray-800 object-contain flex-shrink-0" onerror="this.style.display='none'">` : `<div class="w-8 h-8 bg-gray-900 border border-gray-800 rounded flex-shrink-0"></div>`}
+                                <div class="truncate">
+                                    <p class="font-semibold text-gray-200 group-hover:text-amber-400 transition-colors truncate">${killerName}</p>
+                                    <p class="text-[10px] text-gray-500 font-mono">${itemPower > 0 ? `⚡ ${itemPower} IP` : 'No IP Data'}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-span-3 text-gray-400 italic truncate pr-2">${victimName}</div>
+                            <div class="col-span-3 text-right font-bold font-mono text-red-400">${calculatedFame}</div>
+                        </div>
+                    `;
+            });
+
+            container.innerHTML = htmlContent;
+        }
+
+        function updateCTACooldownEngine() {
+            const displayContainer = document.getElementById('cta-banner-content');
+            if (!displayContainer) return;
+
+            const currentRealTime = new Date();
+            const totalUtcMinutesToday = (currentRealTime.getUTCHours() * 60) + currentRealTime.getUTCMinutes();
+            const rawSeconds = currentRealTime.getUTCSeconds();
+
+            const scheduleTargets = [0, 120, 240];
+            const durationWindow = 30;
+
+            let activeCTAIndex = -1;
+            let targetCTAMinutes = -1;
+            let isInsideWindow = false;
+
+            for (let i = 0; i < scheduleTargets.length; i++) {
+                const startTime = scheduleTargets[i];
+                if (totalUtcMinutesToday >= startTime && totalUtcMinutesToday < (startTime + durationWindow)) {
+                    isInsideWindow = true;
+                    activeCTAIndex = startTime / 60;
+                    targetCTAMinutes = startTime + durationWindow;
+                    break;
+                }
+            }
+
+            if (!isInsideWindow) {
+                const upcomingMatch = scheduleTargets.find(time => time > totalUtcMinutesToday);
+                if (upcomingMatch !== undefined) {
+                    targetCTAMinutes = upcomingMatch;
+                } else {
+                    targetCTAMinutes = 24 * 60;
+                }
+            }
+
+            let totalDeltaMinutes = targetCTAMinutes - totalUtcMinutesToday;
+            let totalDeltaSeconds = (totalDeltaMinutes * 60) - rawSeconds;
+
+            if (totalDeltaSeconds < 0) totalDeltaSeconds = 0;
+
+            const printHours = Math.floor(totalDeltaSeconds / 3600);
+            const printMinutes = Math.floor((totalDeltaSeconds % 3600) / 60);
+            const printSeconds = totalDeltaSeconds % 60;
+
+            const padTimeValue = (val) => String(val).padStart(2, '0');
+
+            if (isInsideWindow) {
+                displayContainer.innerHTML = `
+                        <div class="flex items-center space-x-2 text-red-400 font-extrabold uppercase text-xs tracking-wider animate-pulse">
+                            <span class="flex h-2 w-2 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            </span>
+                            <span>MANDATORY CTA IN PROGRESS: ${padTimeValue(activeCTAIndex)} UTC</span>
+                        </div>
+                        <div class="text-gray-400 font-mono text-xs font-semibold">
+                            Ending In: <span class="text-white font-bold">${padTimeValue(printMinutes)}m:${padTimeValue(printSeconds)}s</span>
+                        </div>
+                    `;
+            } else {
+                let targetDisplayLabel = "00";
+                if (targetCTAMinutes === 120) targetDisplayLabel = "02";
+                if (targetCTAMinutes === 240) targetDisplayLabel = "04";
+
+                displayContainer.innerHTML = `
+                        <div class="text-amber-400 font-bold uppercase text-xs tracking-wider flex items-center gap-1.5">
+                            <i class="fas fa-clock text-[11px]"></i> Next CTA: <span class="text-white underline decoration-amber-500/40">${targetDisplayLabel} UTC</span>
+                        </div>
+                        <div class="text-gray-300 font-mono text-xs font-bold tracking-wide">
+                            ${padTimeValue(printHours)}h:${padTimeValue(printMinutes)}m:${padTimeValue(printSeconds)}s
+                        </div>
+                    `;
+            }
+        }
+
+        setInterval(updateCTACooldownEngine, 1000);
+        updateCTACooldownEngine();
+
+        async function fetchGuildData() {
+            try {
+                console.log("Requesting archives:", localJsonUrl);
+                const response = await fetch(localJsonUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+
+                const guildName = data.Name || "NoFreeThinkers";
+                const killFame = data.killFame ? formatCompactFame(data.killFame) : "0";
+
+                let allianceText = "Independent / No Alliance";
+                if (data.AllianceTag) {
+                    allianceText = data.AllianceName ? `[${data.AllianceTag}] ${data.AllianceName}` : `Alliance Tag: [${data.AllianceTag}]`;
+                }
+
+                document.getElementById('guild-name').innerText = guildName;
+                document.getElementById('alliance-name').innerText = allianceText;
+
+                // COMMENTED OUT/BYPASSED TO PREVENT THE DYNAMIC BUGGED API RESPONSE FROM OVERWRITING THE 250+ VISUAL LAYOUT
+                // document.getElementById('member-count').innerText = memberCount;
+
+                document.getElementById('kill-fame').innerText = killFame;
+
+                try {
+                    const leaderboardResponse = await fetch(topKillsJsonUrl);
+                    if (leaderboardResponse.ok) {
+                        const leaderboardData = await leaderboardResponse.json();
+                        renderLeaderboard(leaderboardData);
+
+                        // Pass captured data structure seamlessly to automate the sticky flanking widget
+                        populateAutomatedSideFeed(leaderboardData);
+                    }
+                } catch (lbError) {
+                    console.error("Leaderboard component runtime failure:", lbError);
+                }
+
+                const loader = document.getElementById('loading');
+                const card = document.getElementById('guild-card');
+
+                loader.classList.add('hidden');
+                card.classList.remove('hidden');
+
+                setTimeout(() => {
+                    card.classList.remove('opacity-0', 'translate-y-4');
+                }, 50);
+
+            } catch (error) {
+                console.error('Data acquisition failure:', error);
+                const loaderText = document.getElementById('loading');
+                loaderText.innerHTML = `
+                        <div class="text-center p-6 glass-panel border-red-500/30 rounded-2xl max-w-sm">
+                            <i class="fas fa-triangle-exclamation text-3xl text-red-500 mb-2"></i>
+                            <p class="text-sm font-semibold text-red-400">Chronicle Data Unreadable</p>
+                            <p class="text-xs text-gray-500 mt-1">${error.message}. Confirm workflow file has completed generation successfully.</p>
+                        </div>
+                    `;
+            }
+        }
+
+        fetchGuildData();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoFreeThinkers | ZvZ Combat Reference</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(40px);
+        }
+
+        .prio-row {
+            background: rgba(245, 158, 11, 0.04) !important;
+        }
+
+        .prio-tag {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .role-section {
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(17, 24, 39, 0.4);
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+
+        .role-header {
+            background: rgba(15, 23, 42, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+            border: 2px solid #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+
+    <div class="bg-glow top-[-10%] right-[-10%] animate-pulse"></div>
+    <div class="bg-glow bottom-[-10%] left-[-10%] animate-pulse" style="animation-duration: 8s;"></div>
+
+    <header class="glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div
+                    class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-black shadow-lg shadow-amber-500/20">
+                    NFT
+                </div>
+                <span class="text-xl font-bold tracking-wider text-amber-400 uppercase">NoFreeThinkers</span>
+            </div>
+
+            <nav class="hidden md:flex space-x-8 text-sm font-medium tracking-wide">
+                <a href="index.html" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Home</a>
+                <a href="index.html#stats"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Guild Stats</a>
+                <a href="members.html"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Members</a>
+                <a href="#" class="text-amber-400 border-b-2 border-amber-400 pb-1">Builds</a>
+                <a href="battleboards.html"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Battle Boards</a>
+                <a href="Lootlogger.html" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Loot
+                    Logger</a> <a href="index.html#community"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Community</a>
+            </nav>
+
+            <div class="flex items-center">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-xs font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-amber-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-600 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-amber-800 mt-2">
+                    <span
+                        class="relative px-4 py-2 transition-all ease-in duration-75 bg-gray-950 rounded-md group-hover:bg-opacity-0">
+                        <i class="fab fa-discord mr-1 text-amber-400 group-hover:text-white"></i> JOIN DISCORD
+                    </span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col space-y-10">
+
+        <section class="text-center max-w-3xl mx-auto space-y-2">
+            <div
+                class="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-semibold text-amber-400 uppercase tracking-widest">
+                <i class="fas fa-shield-halved"></i> Main Doctrine Matrix
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
+                ZvZ Builds <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500">Reference</span>
+            </h1>
+            <p class="text-gray-400 text-sm sm:text-base max-w-xl mx-auto">
+                Official composition loadout guide. View active battlefield equipment configurations by role.
+            </p>
+        </section>
+
+        <section
+            class="max-w-5xl mx-auto w-full flex flex-wrap justify-center gap-4 bg-gray-900/40 p-3 rounded-2xl border border-gray-800/80">
+            <a href="#tanks"
+                class="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase transition-all hover:bg-blue-500/20">
+                <span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_6px_#3b82f6]"></span> Tanks
+            </a>
+            <a href="#healers"
+                class="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold uppercase transition-all hover:bg-green-500/20">
+                <span class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_6px_#22c55e]"></span> Healers
+            </a>
+            <a href="#dps"
+                class="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold uppercase transition-all hover:bg-orange-500/20">
+                <span class="w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_6px_#f97316]"></span> DPS
+            </a>
+            <a href="#support"
+                class="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold uppercase transition-all hover:bg-yellow-500/20">
+                <span class="w-2 h-2 bg-yellow-500 rounded-full shadow-[0_0_6px_#eab308]"></span> Support
+            </a>
+        </section>
+
+        <section id="tanks"
+            class="role-section max-w-7xl mx-auto w-full glass-panel rounded-2xl overflow-hidden shadow-2xl">
+            <div class="role-header p-4 flex items-center gap-3">
+                <div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                <h2 class="text-blue-400 font-black uppercase tracking-widest text-sm">Tank Loadouts (Armour Required
+                    for Regear is T9 Equivalent)</h2>
+            </div>
+            <div class="overflow-x-auto w-full">
+                <table class="custom-table text-left text-xs">
+                    <thead>
+                        <tr
+                            class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-amber-500 font-bold text-center">
+                            <th class="py-4 px-2 w-[18%]">Main Hand</th>
+                            <th class="py-4 px-2 w-[14%]">Off-Hand</th>
+                            <th class="py-4 px-2 w-[18%]">Head Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Chest Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Shoes / Boots</th>
+                            <th class="py-4 px-2 w-[14%]">Food / Buffs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tankBody" class="divide-y divide-gray-900/50 text-sm font-medium"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="healers"
+            class="role-section max-w-7xl mx-auto w-full glass-panel rounded-2xl overflow-hidden shadow-2xl">
+            <div class="role-header p-4 flex items-center gap-3">
+                <div class="w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                <h2 class="text-green-400 font-black uppercase tracking-widest text-sm">Healer Loadouts</h2>
+            </div>
+            <div class="overflow-x-auto w-full">
+                <table class="custom-table text-left text-xs">
+                    <thead>
+                        <tr
+                            class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-amber-500 font-bold text-center">
+                            <th class="py-4 px-2 w-[18%]">Main Hand</th>
+                            <th class="py-4 px-2 w-[14%]">Off-Hand</th>
+                            <th class="py-4 px-2 w-[18%]">Head Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Chest Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Shoes / Boots</th>
+                            <th class="py-4 px-2 w-[14%]">Food / Buffs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="healerBody" class="divide-y divide-gray-900/50 text-sm font-medium"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="dps"
+            class="role-section max-w-7xl mx-auto w-full glass-panel rounded-2xl overflow-hidden shadow-2xl">
+            <div class="role-header p-4 flex items-center gap-3">
+                <div class="w-2.5 h-2.5 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
+                <h2 class="text-orange-400 font-black uppercase tracking-widest text-sm">DPS Loadouts (Main
+                    Weapon,Offhand Required for Regear is T9 Equivalent)</h2>
+            </div>
+            <div class="overflow-x-auto w-full">
+                <table class="custom-table text-left text-xs">
+                    <thead>
+                        <tr
+                            class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-amber-500 font-bold text-center">
+                            <th class="py-4 px-2 w-[18%]">Main Hand</th>
+                            <th class="py-4 px-2 w-[14%]">Off-Hand</th>
+                            <th class="py-4 px-2 w-[18%]">Head Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Chest Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Shoes / Boots</th>
+                            <th class="py-4 px-2 w-[14%]">Food / Buffs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dpsBody" class="divide-y divide-gray-900/50 text-sm font-medium"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="support"
+            class="role-section max-w-7xl mx-auto w-full glass-panel rounded-2xl overflow-hidden shadow-2xl">
+            <div class="role-header p-4 flex items-center gap-3">
+                <div class="w-2.5 h-2.5 bg-yellow-500 rounded-full shadow-[0_0_8px_rgba(234,179,8,0.5)]"></div>
+                <h2 class="text-yellow-400 font-black uppercase tracking-widest text-sm">Support Loadouts (Armour
+                    Required for Regear is T9 Equivalent)</h2>
+            </div>
+            <div class="overflow-x-auto w-full">
+                <table class="custom-table text-left text-xs">
+                    <thead>
+                        <tr
+                            class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-amber-500 font-bold text-center">
+                            <th class="py-4 px-2 w-[18%]">Main Hand</th>
+                            <th class="py-4 px-2 w-[14%]">Off-Hand</th>
+                            <th class="py-4 px-2 w-[18%]">Head Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Chest Gear</th>
+                            <th class="py-4 px-2 w-[18%]">Shoes / Boots</th>
+                            <th class="py-4 px-2 w-[14%]">Food / Buffs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supportBody" class="divide-y divide-gray-900/50 text-sm font-medium"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="glass-nav mt-auto w-full py-6">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 space-y-4 sm:space-y-0">
+            <div>
+                &copy; 2026 <span class="text-gray-400 font-medium">NoFreeThinkers</span>. Built for the Albion Online
+                community.
+            </div>
+            <div>
+                &copy; 2026 Built By:<span class="text-gray-400 font-medium">LelouchYT(Raymen_Shr)</span>.
+            </div>
+            <div class="flex space-x-6 text-base">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="hover:text-indigo-400 transition-colors"><i class="fab fa-discord"></i></a>
+                <a href="https://gameinfo.albiononline.com" target="_blank"
+                    class="hover:text-amber-400 transition-colors"><i class="fas fa-database"></i></a>
+            </div>
+            <div class="text-right tracking-wide">
+                Tactical <span class="text-amber-500/70 font-mono">ZvZ Operations</span> Module
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const buildData = [
+            // TANK SECTION
+            {
+                id: 1,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Heavy Mace",
+                off: '-',
+                head: "Elder's Hellion Hood",
+                headNote: '(Cleric Cowl Swap For Siege)',
+                chest: "Elder's Guardian Armor",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Boots Of Valor",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 2,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Hammer",
+                mainNote: '(Inertia Ring)',
+                off: "Elder's Leering Cane",
+                offNote: 'If Judi Helmet, Elder\'s Mistcaller Otherwise',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Hellion Hood / Elder's Judi Helmet (Cleric Cowl Swap For Siege)",
+                chest: "Elder's Duskweaver Armor",
+                chestNote: "/ Elder's Knight Armor / Elder's Guardian Armor",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Boots Of Valor",
+                food: "Avalonian Pork Omelette  ",
+                foodNote: '(Beef Sandwitch if you got Mistcaller)'
+            },
+            {
+                id: 3,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Dreadstorm",
+                off: "Elder's Astral Aegis",
+                offNote: "/ Elder's Mistcaller",
+                head: "Elder's Hellion Hood",
+                headNote: '(Cleric Cowl Swap For Siege)',
+                chest: "Elder's Knight Armor",
+                chestNote: "/ Elder's Guardian Armor",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Boots Of Valor",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 4,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Black Monk Stave",
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Knight Armor",
+                chestNote: "/ Elder's Guardian Armor",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Boots Of Valor",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 5,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Staff Of Balance",
+                off: '-',
+                head: "Elder's Hellion Hood",
+                chest: "Elder's Guardian Armor",
+                chestNote: "/ Elder's Duskweaver Armor",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Boots Of Valor / Elder's Feyscale Sandals (Usually Good Against Kite)",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 6,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Mace",
+                off: "Elder's Mistcaller",
+                head: "Elder's Hellion Hood",
+                chest: "Elder's Knight Armor",
+                chestNote: "/ Elder's Guardian Armor",
+                feet: "Elder's Royal Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 7,
+                role: 'tank',
+                prio: false,
+                main: "Elder's Icicle Staff",
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Knight Armor",
+                chestNote: "/ Elder's Duskweaver Armor",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Boots Of Valor / Elder's Feyscale Sandals (Usually Good Against Kite)",
+                food: 'Avalonian Pork Omelette'
+            },
+
+            // HEALER SECTION
+            {
+                id: 8,
+                role: 'healer',
+                prio: true,
+                main: "Elder's Hallowfall",
+                mainNote: '(3rd Q Holy Beam + Last Passive)',
+                off: "Elder's Blueflame Torch",
+                head: "Elder's Cleric Cowl",
+                headNote: "/ Elder's Leather Hood On Cleanse / Elder's Guardian Helmet",
+                chest: "Elder's Royal Armor",
+                chestNote: "/ Elder's Judicator Armor (Play 3rd Passive For CC Resist)",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 9,
+                role: 'healer',
+                prio: true,
+                main: "Elder's Nature Staff",
+                mainNote: '(1st Q + Breeze)',
+                off: "Elder's Blueflame Torch",
+                head: "Elder's Cleric Cowl",
+                headNote: "/ Elder's Leather Hood On Cleanse / Elder's Guardian Helmet",
+                chest: "Elder's Royal Armor",
+                chestNote: "/ Elder's Judicator Armor (Play 3rd Passive For CC Resist)",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 10,
+                role: 'healer',
+                prio: false,
+                main: "Elder's Exalted Staff",
+                mainNote: '(Ask Caller)',
+                off: '-',
+                head: "Elder's Cleric Cowl",
+                headNote: "/ Elder's Leather Hood On Cleanse",
+                chest: "Elder's Royal Armor",
+                chestNote: "/ Elder's Judicator Armor (Play 3rd Passive For CC Resist)",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 11,
+                role: 'healer',
+                prio: false,
+                main: "Elder's Fallen Staff",
+                mainNote: '(Ask Caller)',
+                off: '-',
+                head: "Elder's Cleric Cowl",
+                headNote: "/ Elder's Leather Hood On Cleanse",
+                chest: "Elder's Royal Armor",
+                chestNote: "/ Elder's Judicator Armor (Play 3rd Passive For CC Resist)",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 12,
+                role: 'healer',
+                prio: false,
+                main: "Elder's Redemption Staff",
+                mainNote: '(Ask Caller)',
+                off: '-',
+                head: "Elder's Cleric Cowl",
+                headNote: "/ Elder's Leather Hood On Cleanse",
+                chest: "Elder's Assassin Jacket",
+                chestNote: "/ Elder's Leather Jacket (Play 1st Passive For Defences and 2nd Skill Inferno Shield )",
+                feet: "Elder's Royal Shoes",
+                feetNote: "/ Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+
+            // DPS SECTION
+            {
+                id: 13,
+                role: 'dps',
+                prio: true,
+                main: "Elder's Galatine Pair",
+                mainNote: '(Blade Cyclone on W, Iron Will if enemy has many purges)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Cleric Cowl (For Siege)",
+                chest: "Elder's Soldier Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            {
+                id: 14,
+                role: 'dps',
+                prio: true,
+                main: "Elder's Ursine Maulers",
+                off: '-',
+                head: "Elder's Cleric Cowl",
+                headNote: "/ Elder's Leather Hood On Cleanse",
+                chest: "Elder's Hellion Jacket",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            {
+                id: 15,
+                role: 'dps',
+                prio: true,
+                main: "Elder's Forge Hammers",
+                mainNote: '(1st Q + Dash W)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Cleric Cowl (For Siege)",
+                chest: "Elder's Soldier Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            {
+                id: 16,
+                role: 'dps',
+                prio: false,
+                main: "Elder's Halberd",
+                mainNote: '(2nd Q + Internal Bleeding)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Cleric Cowl (For Siege)",
+                chest: "Elder's Soldier Armor",
+                chestNote: "/ Elder's Hellion Jacket",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            {
+                id: 17,
+                role: 'dps',
+                prio: false,
+                main: "Elder's Dawnsong",
+                mainNote: '(Ask Caller)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Cleric Cowl (For Siege)",
+                chest: "Elder's Hellion Jacket",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            {
+                id: 18,
+                role: 'dps',
+                prio: true,
+                main: "Elder's Lightcaller",
+                mainNote: '(Ask Caller)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Feyscale Hat",
+                chest: "Elder's Soldier Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            //{
+            //id: 19,
+            //role: 'dps',
+            //prio: false,
+            //main: "Elder's Ravenstrike Cestus",
+            //off: '-',
+            //head: "Elder's Assassin Hood",
+            //headNote: "/ Elder's Cleric Cowl (For Siege)",
+            //chest: "Elder's Soldier Armor",
+            //feet: "Elder's Stalker Shoes",
+            //feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+            //food: 'Beef Stew'
+            //},
+            {
+                id: 20,
+                role: 'dps',
+                prio: false,
+                main: "Elder's Carrioncaller",
+                mainNote: '(2nd Q + Internal Bleeding) (Ask Caller)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Cleric Cowl (For Siege)",
+                chest: "Elder's Hellion Jacket",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            {
+                id: 21,
+                role: 'dps',
+                prio: false,
+                main: "Elder's Demonfang",
+                mainNote: '(Ask Caller)',
+                off: "Elder's Muisak",
+                head: "Elder's Assassin Hood",
+                headNote: "/ Elder's Cleric Cowl (For Siege)",
+                chest: "Elder's Hellion Jacket",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Beef Stew'
+            },
+            //{
+            //id: 22,
+            //role: 'dps',
+            //prio: false,
+            //main: "Elder's Spiked Gauntlets",
+            //mainNote: '(Ask Caller)',
+            //off: "-",  
+            //head: "Elder's Assassin Hood",
+            //headNote: "/ Elder's Cleric Cowl (For Siege)",
+            //chest: "Elder's Hellion Jacket",
+            //feet: "Elder's Stalker Shoes",
+            //feetNote: "/ Elder's Royal Shoes / Elder's Boots Of Valor",
+            //food: 'Beef Stew'
+            //},
+
+            // SUPPORT SECTION
+            {
+                id: 23,
+                role: 'support',
+                prio: false,
+                main: "Elder's Oathkeepers",
+                mainNote: '(1st Q + Guard Rune)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Demon Armor",
+                chestNote: "/ Elder's Judicator Armor",
+                feet: "Elder's Guardian Boots",
+                feetNote: "If Demon Otherwise Elder's Royal Shoes / Elder's Boots Of Valor",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 24,
+                role: 'support',
+                prio: false,
+                main: "Elder's Rootbound Staff",
+                mainNote: '(Shield Q + Pull W)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Judicator Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 25,
+                role: 'support',
+                prio: false,
+                main: "Elder's Evensong",
+                mainNote: '(Shield Q + Cleanse W)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Royal Armor",
+                chestNote: "/ Elder's Guardian Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 26,
+                role: 'support',
+                prio: false,
+                main: "Elder's Damnation Staff",
+                mainNote: '(Play Morgana Cape)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Royal Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            },
+            {
+                id: 27,
+                role: 'support',
+                prio: false,
+                main: "Elder's Malevolent Locus",
+                mainNote: '(Ask Caller)',
+                off: '-',
+                head: "Elder's Assassin Hood",
+                chest: "Elder's Judicator Armor",
+                feet: "Elder's Stalker Shoes",
+                feetNote: "/ Elder's Royal Shoes / Elder's Mercenary Shoes",
+                food: 'Avalonian Pork Omelette'
+            }
+        ];
+
+        function generateRenderUrl(itemName) {
+            if (!itemName || itemName === '-') return null;
+            return `https://render.albiononline.com/v1/item/${encodeURIComponent(itemName.trim())}@4.png?locale=en&quality=4`;
+        }
+
+        function buildItemSlotCell(baseName, baseNote) {
+            if (!baseName || baseName === '-') {
+                return `
+                    <div class="flex flex-col items-center justify-start text-center h-full w-full">
+                        <div class="w-28 h-28 flex items-center justify-center text-gray-700 shrink-0 mb-1">
+                            <i class="fas fa-ban text-[11px]"></i>
+                        </div>
+                        <div class="h-4 flex items-center justify-center"><span class="text-gray-600 font-sans text-[10px] italic tracking-wide">Empty Slot</span></div>
+                        <div class="h-5 mt-0.5"></div>
+                    </div>
+                `;
+            }
+
+            const baseImgUrl = generateRenderUrl(baseName);
+
+            return `
+                <div class="flex flex-col items-center justify-start text-center h-full w-full">
+                    <div class="w-28 h-28 flex items-center justify-center shrink-0 mb-1">
+                        <img src="${baseImgUrl}" alt="${baseName}" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23d97706\' stroke-width=\'1\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z\' /></svg>';" class="w-full h-full object-contain">
+                    </div>
+                    <div class="h-4 flex items-center justify-center">
+                        <span class="text-gray-200 font-bold tracking-wide text-[11px] truncate max-w-full px-1">${baseName}</span>
+                    </div>
+                    <div class="h-5 flex items-start justify-center mt-0.5 overflow-hidden">
+                        ${baseNote ? `<span class="text-[9px] text-gray-500 leading-tight font-medium px-1 line-clamp-2">${baseNote}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function createRow(build) {
+            const tr = document.createElement('tr');
+            tr.className = `hover:bg-gray-900/10 transition-colors border-b border-gray-900/40 text-gray-300 ${build.prio ? 'prio-row' : ''}`;
+
+            tr.innerHTML = `
+                <td class="py-4 px-2 relative align-top">
+                    <div class="w-full flex flex-col justify-between">
+                        ${buildItemSlotCell(build.main, build.mainNote)}
+                        
+                        <div class="absolute top-2 left-2 flex items-center space-x-1">
+                            ${build.prio ? `
+                                <span class="prio-tag text-[8px] px-1 py-0.5 rounded text-white font-black tracking-wider shadow-sm shadow-amber-500/20">PRIO</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-2 align-top">
+                    ${buildItemSlotCell(build.off, build.offNote)}
+                </td>
+                <td class="py-4 px-2 align-top">
+                    ${buildItemSlotCell(build.head, build.headNote)}
+                </td>
+                <td class="py-4 px-2 align-top">
+                    ${buildItemSlotCell(build.chest, build.chestNote)}
+                </td>
+                <td class="py-4 px-2 align-top">
+                    ${buildItemSlotCell(build.feet, build.feetNote)}
+                </td>
+                <td class="py-4 px-2 align-top">
+                    <div class="flex flex-col items-center justify-start text-center h-full w-full">
+                        <div class="w-28 h-28 flex items-center justify-center p-0.5 shrink-0 mb-1">
+                            <img src="${generateRenderUrl(build.food)}" alt="${build.food}" onerror="this.style.display='none'" class="w-full h-full object-contain">
+                        </div>
+                        <div class="h-4 flex items-center justify-center">
+                            <span class="text-amber-500/90 text-[10px] font-semibold italic truncate max-w-full px-1">${build.food}</span>
+                        </div>
+                        <div class="h-5 flex items-start justify-center mt-0.5 overflow-hidden">
+                            ${build.foodNote ? `<span class="text-[9px] text-gray-500 leading-tight font-medium px-1 line-clamp-2">${build.foodNote}</span>` : ''}
+                        </div>
+                    </div>
+                </td>
+            `;
+            return tr;
+        }
+
+        function renderTables() {
+            const sections = {
+                tank: document.getElementById('tankBody'),
+                healer: document.getElementById('healerBody'),
+                dps: document.getElementById('dpsBody'),
+                support: document.getElementById('supportBody')
+            };
+
+            Object.values(sections).forEach(el => el.innerHTML = '');
+
+            buildData.forEach(build => {
+                const target = sections[build.role];
+                if (target) {
+                    target.appendChild(createRow(build));
+                }
+            });
+        }
+
+        renderTables();
+    </script>
+</body>
+
+</html>

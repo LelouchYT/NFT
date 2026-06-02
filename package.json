@@ -1,0 +1,8 @@
+{
+  "name": "nft-og-generator",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@vercel/og": "^0.6.5"
+  }
+}

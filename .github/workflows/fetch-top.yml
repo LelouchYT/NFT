@@ -1,0 +1,58 @@
+name: Fetch Weekly Top Outlands Kills
+
+on:
+  workflow_dispatch: # Handled exclusively by the Master Orchestrator or manual overrides
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-leaderboard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Codebase
+        uses: actions/checkout@v4
+
+      - name: Pull Weekly Top Outlands Data from Albion API (With Retries)
+        run: |
+          API_URL="https://gameinfo.albiononline.com/api/gameinfo/guilds/AIbIw4erSVyHg9Ab6LVtdA/top?range=week&limit=10&offset=1&region=Outlands"
+          
+          # Try up to 3 times before throwing an error
+          for i in {1..3}; do
+            echo "Attempt $i: Initiating data acquisition from Albion API node..."
+            
+            # Perform curl request with an extended 45-second timeout and custom User-Agent
+            curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+                 --max-time 45 \
+                 "$API_URL" -o top-kills.json
+
+            # Validation block: Check if file exists, has size > 0, and doesn't contain a generic 500 error string
+            if [ -s top-kills.json ] && ! grep -q "Internal Server Error" top-kills.json; then
+              echo "Data payload mapped successfully on attempt $i."
+              break
+            fi
+            
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, timed out, or returned an error. Waiting 15 seconds to retry..."
+              sleep 15
+            else
+              echo "Critical Error: Albion API failed to return a valid response after 3 attempts."
+              exit 1
+            fi
+          done
+
+      - name: Securely Commit and Push Dataset back to GitHub Pages Branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Only proceed with the commit script if changes to the file are actually detected
+          git add top-kills.json
+          if git diff-index --quiet HEAD --; then
+            echo "No change in ranking telemetry metrics. Skipping push routine."
+          else
+            git commit -m "chore(data): automated update of weekly top outlands kills [skip ci]"
+            git push
+            echo "New dataset successfully pushed to repository storage logs."
+          fi

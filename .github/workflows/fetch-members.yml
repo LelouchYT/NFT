@@ -1,0 +1,56 @@
+name: Update Guild Member Chronicle
+
+on:
+  workflow_dispatch:      # Handled exclusively by the Master Orchestrator or manual overrides
+
+# Force the runner to execute all JavaScript actions using Node.js 24
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code Architecture
+      uses: actions/checkout@v4
+
+    - name: Query Royal Archives for Roster Data (With Retries)
+      run: |
+        API_URL="https://gameinfo.albiononline.com/api/gameinfo/guilds/AIbIw4erSVyHg9Ab6LVtdA/members"
+        
+        # Try up to 3 times before giving up and throwing exit code 1
+        for i in {1..3}; do
+          echo "Attempt $i: Querying roster demographics from Albion API..."
+          
+          curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+               --max-time 45 \
+               "$API_URL" -o members-data.json
+          
+          # Validate that the file is not empty and doesn't contain server errors
+          if [ -s members-data.json ] && ! grep -q "Internal Server Error" members-data.json; then
+            echo "Roster data payload saved and validated successfully on attempt $i."
+            break
+          fi
+          
+          if [ $i -lt 3 ]; then
+            echo "Attempt $i failed or timed out. Waiting 15 seconds to retry..."
+            sleep 15
+          else
+            echo "Critical Error: Roster data unreadable after 3 sequential attempts."
+            exit 1
+          fi
+        done
+
+    - name: Secure and Sync Archives to Repository
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+        git add members-data.json
+        # Only commit if actual data delta changes occur
+        git diff-index --quiet HEAD || git commit -m "chore: dynamically sync outbound alliance roster telemetry [automated]"
+        git push origin main

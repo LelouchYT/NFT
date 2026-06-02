@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoFreeThinkers | Members</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(40px);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+
+    <div class="bg-glow top-[-10%] right-[-10%] animate-pulse"></div>
+    <div class="bg-glow bottom-[-10%] left-[-10%] animate-pulse" style="animation-duration: 8s;"></div>
+
+    <header class="glass-nav fixed top-0 left-0 w-full z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div
+                    class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-black shadow-lg shadow-amber-500/20">
+                    NFT
+                </div>
+                <span class="text-xl font-bold tracking-wider text-amber-400 uppercase">NoFreeThinkers</span>
+            </div>
+
+            <nav class="hidden md:flex space-x-8 text-sm font-medium tracking-wide">
+                <a href="index.html" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Home</a>
+                <a href="index.html#stats"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Guild Stats</a>
+                <a href="#" class="text-amber-400 border-b-2 border-amber-400 pb-1">Members</a>
+                <a href="build.html"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Builds</a>
+                <a href="battleboards.html"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Battle Boards</a>
+                <a href="Lootlogger.html" class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Loot
+                    Logger</a>
+                <a href="index.html#community"
+                    class="text-gray-300 hover:text-amber-400 transition-colors duration-200">Community</a>
+            </nav>
+
+            <div class="flex items-center">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-xs font-bold text-gray-900 rounded-lg group bg-gradient-to-br from-amber-500 to-orange-600 group-hover:from-amber-500 group-hover:to-orange-600 hover:text-white text-white focus:ring-4 focus:outline-none focus:ring-amber-800 mt-2">
+                    <span
+                        class="relative px-4 py-2 transition-all ease-in duration-75 bg-gray-950 rounded-md group-hover:bg-opacity-0">
+                        <i class="fab fa-discord mr-1 text-amber-400 group-hover:text-white"></i> JOIN DISCORD
+                    </span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col items-center">
+
+        <div id="loading" class="flex flex-col items-center justify-center space-y-4 py-24 transition-all duration-300">
+            <div class="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-lg font-medium text-gray-400 tracking-wide">Retrieving Roster Archives...</p>
+        </div>
+
+        <div id="roster-container"
+            class="w-full space-y-8 hidden opacity-0 transform translate-y-4 transition-all duration-500">
+
+            <section class="text-center max-w-3xl mx-auto space-y-2">
+                <div
+                    class="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-semibold text-amber-400 uppercase tracking-widest">
+                    <i class="fas fa-users-viewfinder"></i> Live Outlands Telemetry
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
+                    Guild <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500">Members</span>
+                </h1>
+                <p class="text-gray-400 text-sm sm:text-base max-w-xl mx-auto">
+                    A comprehensive roster log tracking active kill counts, crafting value indexes, and operational
+                    updates.
+                </p>
+            </section>
+
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto w-full">
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase text-gray-400 tracking-wider font-bold block">Enlisted Roster
+                            Size</span>
+                        <span id="stat-total-count" class="text-2xl font-black text-white">-</span>
+                    </div>
+                    <i class="fas fa-user-shield text-xl text-amber-500/50"></i>
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase text-gray-400 tracking-wider font-bold block">Top PvP
+                            Slayer</span>
+                        <span id="stat-top-pvp"
+                            class="text-sm font-black text-red-400 block truncate max-w-[180px]">-</span>
+                    </div>
+                    <i class="fas fa-trophy text-xl text-red-500/50"></i>
+                </div>
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase text-gray-400 tracking-wider font-bold block">Average Kill
+                            Fame</span>
+                        <span id="stat-avg-fame" class="text-2xl font-black text-orange-400 block">-</span>
+                    </div>
+                    <i class="fas fa-chart-line text-xl text-orange-500/50"></i>
+                </div>
+            </section>
+
+            <section
+                class="max-w-5xl mx-auto w-full flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-900/40 p-4 rounded-2xl border border-gray-800">
+                <div class="relative w-full sm:max-w-sm">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i class="fas fa-magnifying-glass text-gray-500 text-sm"></i>
+                    </span>
+                    <input type="text" id="member-search" placeholder="Search For A Player"
+                        class="w-full pl-9 pr-4 py-2 bg-gray-950 border border-gray-800 rounded-xl text-sm focus:outline-none focus:border-amber-500 transition-colors placeholder:text-gray-600 text-white">
+                </div>
+                <div class="text-xs text-gray-500 tracking-wide">
+                    Showing <span id="displayed-count" class="text-amber-500 font-bold">0</span> Members
+                </div>
+            </section>
+
+            <section class="max-w-5xl mx-auto w-full">
+                <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl border border-gray-800/60">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr
+                                    class="bg-gray-900/60 border-b border-gray-800 text-[11px] uppercase tracking-wider text-amber-500 font-bold">
+                                    <th class="py-4 px-6">Name</th>
+                                    <th class="py-4 px-4 text-right">Death Fame</th>
+                                    <th class="py-4 px-4 text-right">Kill Fame</th>
+                                    <th class="py-4 px-4 text-right">Fame Ratio</th>
+                                    <th class="py-4 px-6 text-center">External Intel</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roster-rows" class="divide-y divide-gray-900/50 text-sm font-medium">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="glass-nav mt-auto w-full py-6">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 space-y-4 sm:space-y-0">
+            <div>
+                &copy; 2026 <span class="text-gray-400 font-medium">NoFreeThinkers</span>. Built for the Albion Online
+                community.
+            </div>
+            <div>
+                &copy; 2026 Built By:<span class="text-gray-400 font-medium">LelouchYT(Raymen_Shr)</span>.
+            </div>
+            <div class="flex space-x-6 text-base">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="hover:text-indigo-400 transition-colors"><i class="fab fa-discord"></i></a>
+                <a href="https://gameinfo.albiononline.com" target="_blank"
+                    class="hover:text-amber-400 transition-colors"><i class="fas fa-database"></i></a>
+            </div>
+            <div class="text-right tracking-wide">
+                Synced securely via <span class="text-amber-500/70 font-mono">GitHub Actions</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const githubUser = 'AlbionNFT';
+        const repoName = 'NFT';
+        const membersJsonUrl = `/members-data.json?t=${Date.now()}`;
+
+        let localRosterDataset = [];
+
+        // Formatting Engine: Converts 44217640 to "44.2 Million", 1500000000 to "1.5 Billion"
+        function formatFameNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) return "0";
+            if (num >= 1e9) {
+                return (num / 1e9).toFixed(1).replace(/\.0$/, '') + ' Billion';
+            }
+            if (num >= 1e6) {
+                return (num / 1e6).toFixed(1).replace(/\.0$/, '') + ' Million';
+            }
+            if (num >= 1e3) {
+                return (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'Thousand';
+            }
+            return num.toString();
+        }
+
+        async function fetchRosterData() {
+            try {
+                const response = await fetch(membersJsonUrl);
+                if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+
+                localRosterDataset = await response.json();
+
+                // Sort the array immediately by absolute Kill Fame (Descending)
+                localRosterDataset.sort((a, b) => (b.KillFame || 0) - (a.KillFame || 0));
+
+                calculateRosterMetrics(localRosterDataset);
+                renderRosterGrid(localRosterDataset);
+
+                // Transition interface frames smoothly
+                const loader = document.getElementById('loading');
+                const container = document.getElementById('roster-container');
+
+                loader.classList.add('hidden');
+                container.classList.remove('hidden');
+                setTimeout(() => {
+                    container.classList.remove('opacity-0', 'translate-y-4');
+                }, 50);
+
+                // Attach filtering engine listener
+                document.getElementById('member-search').addEventListener('input', runSearchFilter);
+
+            } catch (error) {
+                console.error('Roster fetch failure sequence deployed:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div class="text-center p-6 glass-panel border-red-500/30 rounded-2xl max-w-sm">
+                        <i class="fas fa-triangle-exclamation text-3xl text-red-500 mb-2"></i>
+                        <p class="text-sm font-semibold text-red-400">Roster Archive Unreadable</p>
+                        <p class="text-xs text-gray-500 mt-1">${error.message}. Confirm workflow script execution pipeline status.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function calculateRosterMetrics(members) {
+            if (!members.length) return;
+
+            document.getElementById('stat-total-count').innerText = members.length;
+
+            // Top kill fame member tracking
+            const topSlayer = members[0];
+            document.getElementById('stat-top-pvp').innerText = `${topSlayer.Name} (${formatFameNumber(topSlayer.KillFame)})`;
+
+            // Arithmetic mean generation for top overview card
+            const totalKillFame = members.reduce((sum, current) => sum + (current.KillFame || 0), 0);
+            const averageFame = Math.round(totalKillFame / members.length);
+            document.getElementById('stat-avg-fame').innerText = formatFameNumber(averageFame);
+        }
+
+        function renderRosterGrid(members) {
+            const tableBody = document.getElementById('roster-rows');
+            tableBody.innerHTML = '';
+
+            document.getElementById('displayed-count').innerText = members.length;
+
+            if (members.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500 text-xs italic tracking-wide">
+                            No active matching personnel records matched filtering criteria.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            members.forEach(player => {
+                const killFame = player.KillFame || 0;
+                const deathFame = player.DeathFame || 0;
+
+                // Pull directly from raw JSON value
+                const ratio = player.FameRatio !== undefined ? Number(player.FameRatio).toFixed(2) : "0.00";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-900/30 transition-colors border-b border-gray-900/40 text-gray-300";
+                tr.innerHTML = `
+                    <td class="py-3.5 px-6 font-bold text-white tracking-wide">${player.Name}</td>
+                    <td class="py-3.5 px-4 text-right text-gray-500 font-mono text-xs">${formatFameNumber(deathFame)}</td>
+                    <td class="py-3.5 px-4 text-right text-red-400 font-mono text-xs">${formatFameNumber(killFame)}</td>
+                    <td class="py-3.5 px-4 text-right ${ratio >= 1.0 ? 'text-emerald-400' : 'text-amber-500/70'} font-mono text-xs">${ratio}</td>
+                    <td class="py-3.5 px-6 text-center">
+                        <a href="https://albiondb.net/player/${player.Name}" target="_blank" class="inline-flex items-center space-x-1 text-[11px] bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black font-bold px-2 py-1 rounded border border-amber-500/20 hover:border-transparent transition-all tracking-wider uppercase">
+                            <span>Profile</span> <i class="fas fa-arrow-up-right-from-square text-[9px]"></i>
+                        </a>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function runSearchFilter(e) {
+            const criteria = e.target.value.toLowerCase().trim();
+            const matchingSubset = localRosterDataset.filter(player =>
+                player.Name.toLowerCase().includes(criteria)
+            );
+            renderRosterGrid(matchingSubset);
+        }
+
+        // Initialize load sequence
+        fetchRosterData();
+    </script>
+</body>
+
+</html>
