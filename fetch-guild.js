@@ -46,7 +46,7 @@ async function handleRequest(request) {
 
 async function handleScheduled(event) {
   const ALBION_GUILD_ID = "AIbIw4erSVyHg9Ab6LVtdA"; // Swap with your real ID string
-  
+
   const guildApiUrl = `https://gameinfo.albiononline.com/api/gameinfo/guilds/${ALBION_GUILD_ID}`;
   const killsApiUrl = `https://gameinfo.albiononline.com/api/gameinfo/guilds/${ALBION_GUILD_ID}/top?range=week`;
 
@@ -55,7 +55,7 @@ async function handleScheduled(event) {
     const guildRes = await fetch(guildApiUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
     if (guildRes.ok) {
       const data = await guildRes.json();
-      
+
       const updatePayload = {
         name: data.Name,
         alliance_tag: data.AllianceTag || null,
@@ -94,7 +94,7 @@ async function handleScheduled(event) {
         })
       });
     }
-    
+
     console.log("Supabase database successfully synchronized.");
   } catch (err) {
     console.error("Background sync failed:", err);
