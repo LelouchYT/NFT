@@ -18,58 +18,73 @@ jobs:
             const repo = context.repo.repo;
             const ref = context.ref;
 
-            // Engine to dispatch a workflow and await its complete successful execution
-            async function runWorkflowAndBlock(workflowFile, friendlyName) {
-              console.log(`🚀 Dispatching: ${friendlyName} (${workflowFile})...`);
-              
-              // 1. Fire the dispatch request
-              await github.rest.actions.createWorkflowDispatch({
-                owner, 
-                repo, 
-                workflow_id: workflowFile, 
-                ref
-              });
-
-              // 2. Allow GitHub Actions API a short processing window to spin up the run instance
-              await new Promise(resolve => setTimeout(resolve, 10000));
-
-              // 3. Locate the run ID of the workflow we just fired
-              const runs = await github.rest.actions.listWorkflowRuns({
-                owner, 
-                repo, 
-                workflow_id: workflowFile, 
-                per_page: 1
-              });
-
-              if (runs.data.workflow_runs.length === 0) {
-                throw new Error(`Failed to isolate tracking context for target: ${friendlyName}`);
-              }
-
-              const runId = runs.data.workflow_runs[0].id;
-              console.log(`🔗 Tracking Active Run ID: ${runId}. Monitoring telemetry data loops...`);
-
-              // 4. Actively poll execution status until it hits a finalized conclusion
-              while (true) {
-                await new Promise(resolve => setTimeout(resolve, 12000)); // Poll every 12 seconds
+            // Engine to dispatch a workflow and retry upon failure until it passes
+            async function runWorkflowAndBlock(workflowFile, friendlyName, maxRetries = 5) {
+              for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                console.log(`🚀 [Attempt ${attempt}/${maxRetries}] Dispatching: ${friendlyName} (${workflowFile})...`);
                 
-                const check = await github.rest.actions.getWorkflowRun({
+                // 1. Fire the dispatch request
+                await github.rest.actions.createWorkflowDispatch({
                   owner, 
                   repo, 
-                  run_id: runId
+                  workflow_id: workflowFile, 
+                  ref
                 });
-                
-                const status = check.data.status;
-                const conclusion = check.data.conclusion;
 
-                console.log(`⏳ [${friendlyName}] -> Status: ${status.toUpperCase()} | Conclusion: ${conclusion ? conclusion.toUpperCase() : 'IN-PROGRESS'}`);
+                // 2. Allow GitHub Actions API time to process and spin up the run instance
+                await new Promise(resolve => setTimeout(resolve, 10000));
 
-                if (status === 'completed') {
-                  if (conclusion === 'success') {
-                    console.log(`✅ ${friendlyName} processed successfully structural modifications written.\n`);
-                    break;
-                  } else {
-                    throw new Error(`❌ ${friendlyName} halted unexpected exception context: ${conclusion}`);
+                // 3. Locate the latest run ID
+                const runs = await github.rest.actions.listWorkflowRuns({
+                  owner, 
+                  repo, 
+                  workflow_id: workflowFile, 
+                  per_page: 1
+                });
+
+                if (runs.data.workflow_runs.length === 0) {
+                  console.log(`⚠️ Failed to find run ID context. Retrying attempt ${attempt}...`);
+                  continue;
+                }
+
+                const runId = runs.data.workflow_runs[0].id;
+                console.log(`🔗 Tracking Active Run ID: ${runId}`);
+
+                // 4. Poll execution status
+                let passed = false;
+                while (true) {
+                  await new Promise(resolve => setTimeout(resolve, 12000));
+                  
+                  const check = await github.rest.actions.getWorkflowRun({
+                    owner, 
+                    repo, 
+                    run_id: runId
+                  });
+                  
+                  const status = check.data.status;
+                  const conclusion = check.data.conclusion;
+
+                  console.log(`⏳ [${friendlyName}] -> Status: ${status.toUpperCase()} | Conclusion: ${conclusion ? conclusion.toUpperCase() : 'IN-PROGRESS'}`);
+
+                  if (status === 'completed') {
+                    if (conclusion === 'success') {
+                      console.log(`✅ ${friendlyName} processed successfully on attempt ${attempt}.\n`);
+                      passed = true;
+                      break;
+                    } else {
+                      console.log(`⚠️ ${friendlyName} failed on attempt ${attempt} (Conclusion: ${conclusion}).`);
+                      break; // Break polling loop to trigger the next retry attempt
+                    }
                   }
+                }
+
+                if (passed) return; // Exit function successfully
+
+                if (attempt < maxRetries) {
+                  console.log(`🔄 Albion API rate-limit/timeout detected. Waiting 20 seconds before attempt ${attempt + 1}...`);
+                  await new Promise(resolve => setTimeout(resolve, 20000));
+                } else {
+                  throw new Error(`❌ ${friendlyName} failed after ${maxRetries} sequential attempts.`);
                 }
               }
             }
