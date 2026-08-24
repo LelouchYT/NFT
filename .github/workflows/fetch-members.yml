@@ -23,21 +23,21 @@ jobs:
         API_URL="https://gameinfo.albiononline.com/api/gameinfo/guilds/AIbIw4erSVyHg9Ab6LVtdA/members"
         MAX_RETRIES=5
         DELAY=15
-        
+
         for (( i=1; i<=MAX_RETRIES; i++ )); do
           echo "Attempt $i/$MAX_RETRIES: Querying roster demographics from Albion API..."
-          
+
           # Fetch payload and capture HTTP Status Code
           HTTP_STATUS=$(curl -s -w "%{http_code}" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0" \
-               --max-time 45 \
-               "$API_URL" -o new-members-data.json)
-          
+                --max-time 45 \
+                "$API_URL" -o new-members-data.json)
+
           # Validate HTTP 200 AND valid JSON formatting via jq
           if [ "$HTTP_STATUS" -eq 200 ] && jq . new-members-data.json > /dev/null 2>&1; then
             echo "Roster data payload saved and validated successfully on attempt $i."
             break
           fi
-          
+
           echo "⚠️ Attempt $i failed (HTTP Status: $HTTP_STATUS or Invalid JSON)."
           if [ $i -lt $MAX_RETRIES ]; then
             echo "Waiting ${DELAY}s before retrying..."
@@ -65,7 +65,7 @@ jobs:
             if not url or url.startswith("https://discord.com/api/webhooks/YOUR"):
                 print("No valid WEBHOOK_URL configured. Skipping webhook execution.")
                 return
-            
+
             while True:
                 req = urllib.request.Request(
                     url,
@@ -112,24 +112,24 @@ jobs:
         old_members = {p['Id']: p for p in old_data if isinstance(p, dict) and 'Id' in p} if isinstance(old_data, list) else {}
         new_members = {p['Id']: p for p in new_data if isinstance(p, dict) and 'Id' in p} if isinstance(new_data, list) else {}
 
-        # Detect left members
+        # 1. Detect departures (in old baseline, but missing in new fetch)
         for old_id, old_player in old_members.items():
             if old_id not in new_members:
                 name = old_player.get('Name', 'Unknown Player')
                 kill_fame = old_player.get('KillFame', 0)
                 death_fame = old_player.get('DeathFame', 0)
-                
+
                 lifetime_stats = old_player.get('LifetimeStatistics') or {}
                 pve_stats = lifetime_stats.get('PvE') or {}
                 pve_total = pve_stats.get('Total', 0)
 
                 print(f"Detected departure: {name}")
-                
+
                 payload = {
                     "embeds": [{
                         "title": "🚪 Member Left Guild",
                         "description": f"**{name}** has left the guild in-game.",
-                        "color": 15158332,
+                        "color": 15158332, # Red
                         "fields": [
                             {"name": "⚔️ Kill Fame", "value": f"{kill_fame:,}", "inline": True},
                             {"name": "💀 Death Fame", "value": f"{death_fame:,}", "inline": True},
@@ -139,16 +139,45 @@ jobs:
                     }]
                 }
                 send_discord_webhook(payload, webhook_url)
+
+        # 2. Detect new arrivals (in new fetch, but missing in old baseline) - skipped if baseline was empty
+        if old_members:
+            for new_id, new_player in new_members.items():
+                if new_id not in old_members:
+                    name = new_player.get('Name', 'New Recruit')
+                    kill_fame = new_player.get('KillFame', 0)
+                    death_fame = new_player.get('DeathFame', 0)
+
+                    lifetime_stats = new_player.get('LifetimeStatistics') or {}
+                    pve_stats = lifetime_stats.get('PvE') or {}
+                    pve_total = pve_stats.get('Total', 0)
+
+                    print(f"Detected new arrival: {name}")
+
+                    payload = {
+                        "embeds": [{
+                            "title": "🎉 New Guild Recruit",
+                            "description": f"**{name}** has joined the guild!",
+                            "color": 3066993, # Green
+                            "fields": [
+                                {"name": "⚔️ Kill Fame", "value": f"{kill_fame:,}", "inline": True},
+                                {"name": "💀 Death Fame", "value": f"{death_fame:,}", "inline": True},
+                                {"name": "🛡️ PvE Total Fame", "value": f"{pve_total:,}", "inline": True},
+                                {"name": "🔗 Killboard", "value": f"[View Profile](https://albiondb.net/player/{new_id})", "inline": False}
+                            ]
+                        }]
+                    }
+                    send_discord_webhook(payload, webhook_url)
         EOF
         python compare.py
 
     - name: Secure and Sync Archives to Repository
       run: |
         mv new-members-data.json members-data.json
-        
+
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        
+
         git add members-data.json
         git diff-index --quiet HEAD || git commit -m "chore: dynamically sync outbound alliance roster telemetry [automated]"
         git push origin main
