@@ -51,7 +51,8 @@ jobs:
 
     - name: Compare Roster and Trigger Discord Webhook
       env:
-        WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
+        # ⚠️ HARDCODED WEBHOOK URL BELOW ⚠️
+        WEBHOOK_URL: "https://discord.com/api/webhooks/1541347334124863530/gw7owDHHhvHExeanpTP-acdKY4uthxJnGvAHHzBU7zY1kfh_uxiYOt6bRxYY31bbrAeU"
       run: |
         cat << 'EOF' > compare.py
         import json, os, urllib.request, urllib.error, time
@@ -61,8 +62,8 @@ jobs:
         webhook_url = os.environ.get('WEBHOOK_URL')
 
         def send_discord_webhook(payload, url):
-            if not url:
-                print("No WEBHOOK_URL configured. Skipping webhook execution.")
+            if not url or url.startswith("https://discord.com/api/webhooks/YOUR"):
+                print("No valid WEBHOOK_URL configured. Skipping webhook execution.")
                 return
             
             while True:
