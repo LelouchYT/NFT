@@ -28,10 +28,10 @@ jobs:
           
           curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
                --max-time 45 \
-               "$API_URL" -o members-data.json
+               "$API_URL" -o new-members-data.json
           
           # Validate that the file is not empty and doesn't contain server errors
-          if [ -s members-data.json ] && ! grep -q "Internal Server Error" members-data.json; then
+          if [ -s new-members-data.json ] && ! grep -q "Internal Server Error" new-members-data.json; then
             echo "Roster data payload saved and validated successfully on attempt $i."
             break
           fi
@@ -45,8 +45,95 @@ jobs:
           fi
         done
 
+    - name: Compare Roster and Trigger Discord Webhook
+      env:
+        WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
+      run: |
+        cat << 'EOF' > compare.py
+        import json, os, urllib.request
+
+        old_file = 'members-data.json'
+        new_file = 'new-members-data.json'
+        webhook_url = os.environ.get('WEBHOOK_URL')
+
+        # Load old data if it exists in the repo
+        if os.path.exists(old_file):
+            with open(old_file, 'r') as f:
+                old_data = json.load(f)
+        else:
+            old_data = []
+
+        # Load fresh data
+        with open(new_file, 'r') as f:
+            new_data = json.load(f)
+
+        # Map IDs to player data for instant lookups
+        old_members = {p['Id']: p for p in old_data}
+        new_members = {p['Id']: p for p in new_data}
+
+        # Check for missing players
+        for old_id, old_player in old_members.items():
+            if old_id not in new_members:
+                # 1. Safely extract stats
+                name = old_player.get('Name', 'Unknown Player')
+                kill_fame = old_player.get('KillFame', 0)
+                death_fame = old_player.get('DeathFame', 0)
+                
+                # Nested extraction for PvE Total
+                lifetime_stats = old_player.get('LifetimeStatistics') or {}
+                pve_stats = lifetime_stats.get('PvE') or {}
+                pve_total = pve_stats.get('Total', 0)
+
+                print(f"Detected departure: {name}")
+                
+                # 2. Fire Webhook
+                if webhook_url:
+                    payload = {
+                        "embeds": [{
+                            "title": "🚪 Member Left Guild",
+                            "description": f"**{name}** has left the guild in-game.",
+                            "color": 15158332, # Red
+                            "fields": [
+                                {
+                                    "name": "⚔️ Kill Fame",
+                                    "value": f"{kill_fame:,}",
+                                    "inline": True
+                                },
+                                {
+                                    "name": "💀 Death Fame",
+                                    "value": f"{death_fame:,}",
+                                    "inline": True
+                                },
+                                {
+                                    "name": "🛡️ PvE Total Fame",
+                                    "value": f"{pve_total:,}",
+                                    "inline": True
+                                },
+                                {
+                                    "name": "🔗 Killboard",
+                                    "value": f"[View Profile](https://albiononline.com/en/killboard/player/{old_id})",
+                                    "inline": False
+                                }
+                            ]
+                        }]
+                    }
+                    req = urllib.request.Request(
+                        webhook_url,
+                        data=json.dumps(payload).encode('utf-8'),
+                        headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
+                    )
+                    try:
+                        urllib.request.urlopen(req)
+                    except Exception as e:
+                        print(f"Webhook failed for {name}: {e}")
+        EOF
+        python compare.py
+
     - name: Secure and Sync Archives to Repository
       run: |
+        # Overwrite the old file with the new data
+        mv new-members-data.json members-data.json
+        
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
