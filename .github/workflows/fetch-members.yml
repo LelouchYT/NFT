@@ -134,7 +134,7 @@ jobs:
                             {"name": "⚔️ Kill Fame", "value": f"{kill_fame:,}", "inline": True},
                             {"name": "💀 Death Fame", "value": f"{death_fame:,}", "inline": True},
                             {"name": "🛡️ PvE Total Fame", "value": f"{pve_total:,}", "inline": True},
-                            {"name": "🔗 Killboard", "value": f"[View Profile](https://albiononline.com/en/killboard/player/{old_id})", "inline": False}
+                            {"name": "🔗 Killboard", "value": f"[View Profile](https://albiondb.net/player/{old_id})", "inline": False}
                         ]
                     }]
                 }
