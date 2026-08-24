@@ -17,24 +17,127 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fetch Albion API Data
+      - name: Fetch Albion API Data (With API Retries)
         run: |
-          echo "Initiating guild data acquisition..."
-          curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
-               --max-time 30 \
-               "https://gameinfo.albiononline.com/api/gameinfo/guilds/AIbIw4erSVyHg9Ab6LVtdA" > guild-data.json
+          API_URL="https://gameinfo.albiononline.com/api/gameinfo/guilds/AIbIw4erSVyHg9Ab6LVtdA/members"
+          
+          for i in {1..3}; do
+            echo "Attempt $i: Querying roster demographics from Albion API..."
+            
+            curl -s -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+                 --max-time 45 \
+                 "$API_URL" -o new-members-data.json
+            
+            if [ -s new-members-data.json ] && ! grep -q -E "Internal Server Error|Too Many Requests" new-members-data.json; then
+              echo "Roster data payload saved and validated successfully on attempt $i."
+              break
+            fi
+            
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed or timed out. Waiting 15 seconds to retry..."
+              sleep 15
+            else
+              echo "Critical Error: Roster data unreadable after 3 sequential attempts."
+              exit 1
+            fi
+          done
 
-          if [ -s guild-data.json ]; then
-            echo "Guild data saved successfully."
-          else
-            echo "Error: Empty response received from Albion API."
-            exit 1
-          fi
+      - name: Compare Roster and Broadcast Departures (Discord Rate Limit Protected)
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          cat << 'EOF' > compare.py
+          import json, os, urllib.request, urllib.error, time
+
+          old_file = 'members-data.json'
+          new_file = 'new-members-data.json'
+          webhook_url = os.environ.get('WEBHOOK_URL')
+
+          def send_discord_webhook(payload, url):
+              if not url:
+                  return
+              
+              # Loop until message sends successfully or max attempts reached
+              while True:
+                  req = urllib.request.Request(
+                      url,
+                      data=json.dumps(payload).encode('utf-8'),
+                      headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
+                  )
+                  try:
+                      urllib.request.urlopen(req)
+                      # 1. Proactive Rate Limit Delay: Force a 2-second sleep after every send
+                      time.sleep(2)
+                      break
+                  except urllib.error.HTTPError as e:
+                      # 2. Reactive Rate Limit Handling: If Discord throws HTTP 429
+                      if e.code == 429:
+                          try:
+                              retry_after = float(e.headers.get('Retry-After', 5))
+                          except (ValueError, TypeError):
+                              retry_after = 5
+                          print(f"⚠️ Discord Rate Limit hit (HTTP 429). Retrying in {retry_after}s...")
+                          time.sleep(retry_after)
+                      else:
+                          print(f"❌ HTTP Error {e.code} sending webhook.")
+                          break
+                  except Exception as e:
+                      print(f"❌ Webhook request failed: {e}")
+                      break
+
+          # Load existing roster
+          old_data = []
+          if os.path.exists(old_file):
+              with open(old_file, 'r') as f:
+                  try:
+                      old_data = json.load(f)
+                  except json.JSONDecodeError:
+                      pass
+
+          # Load fresh roster
+          with open(new_file, 'r') as f:
+              new_data = json.load(f)
+
+          old_members = {p['Id']: p for p in old_data}
+          new_members = {p['Id']: p for p in new_data}
+
+          # Check missing players
+          for old_id, old_player in old_members.items():
+              if old_id not in new_members:
+                  name = old_player.get('Name', 'Unknown Player')
+                  kill_fame = old_player.get('KillFame', 0)
+                  death_fame = old_player.get('DeathFame', 0)
+                  
+                  lifetime_stats = old_player.get('LifetimeStatistics') or {}
+                  pve_stats = lifetime_stats.get('PvE') or {}
+                  pve_total = pve_stats.get('Total', 0)
+
+                  print(f"Processing departure notification for: {name}")
+
+                  payload = {
+                      "embeds": [{
+                          "title": "🚪 Member Left Guild",
+                          "description": f"**{name}** has left the guild in-game.",
+                          "color": 15158332,
+                          "fields": [
+                              {"name": "⚔️ Kill Fame", "value": f"{kill_fame:,}", "inline": True},
+                              {"name": "💀 Death Fame", "value": f"{death_fame:,}", "inline": True},
+                              {"name": "🛡️ PvE Total Fame", "value": f"{pve_total:,}", "inline": True},
+                              {"name": "🔗 Killboard", "value": f"[View Profile](https://albiononline.com/en/killboard/player/{old_id})", "inline": False}
+                          ]
+                      }]
+                  }
+                  
+                  send_discord_webhook(payload, webhook_url)
+          EOF
+          python compare.py
 
       - name: Commit and Push if changed
         run: |
+          mv new-members-data.json members-data.json
+          
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add guild-data.json
+          git add members-data.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "Automated Albion data update" && git push)
