@@ -51,8 +51,7 @@ jobs:
 
     - name: Compare Roster and Trigger Discord Webhook
       env:
-        # ⚠️ HARDCODED WEBHOOK URL BELOW ⚠️
-        WEBHOOK_URL: "https://discord.com/api/webhooks/1541347334124863530/gw7owDHHhvHExeanpTP-acdKY4uthxJnGvAHHzBU7zY1kfh_uxiYOt6bRxYY31bbrAeU"
+        WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
       run: |
         cat << 'EOF' > compare.py
         import json, os, urllib.request, urllib.error, time
