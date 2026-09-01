@@ -100,9 +100,6 @@ jobs:
               // Syncs Guild Membership Matrix
               await runWorkflowAndBlock('fetch-members.yml', 'Members List Sync');
               
-              // Syncs Battleboard Logs 
-              await runWorkflowAndBlock('fetch-battles.yml', 'Battleboards Sync');
-              
               console.log("🎉 Data pipeline processing sequence completed with flawless git synchronization!");
             } catch (error) {
               core.setFailed(`Critical Orchestrator Abort Sequence: ${error.message}`);
