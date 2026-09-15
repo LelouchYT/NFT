@@ -226,10 +226,6 @@
 
             <!-- Action Toolbar -->
             <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <button id="btn-load-demo"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-400 transition cursor-pointer">
-                    <i class="fas fa-wand-magic-sparkles text-amber-400"></i> Load Demo Logs
-                </button>
                 <button id="btn-paste-modal"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-200 bg-gray-800/80 border border-gray-700 hover:border-gray-500 transition cursor-pointer">
                     <i class="fas fa-clipboard text-amber-400"></i> Paste CSV / Raw Text
@@ -501,14 +497,7 @@
                     <i class="fas fa-boxes-packing"></i>
                 </div>
                 <h3 class="text-xl font-bold text-white">No Loot Logs Loaded</h3>
-                <p class="text-sm text-gray-400 leading-relaxed">Upload your CSV from AO Loot Logger or click below to
-                    load sample demo data.</p>
-                <div class="flex justify-center gap-3 pt-2">
-                    <button id="btn-empty-demo"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-amber-500 to-orange-600 text-gray-950 hover:from-amber-400 hover:to-orange-500 shadow-lg shadow-amber-500/20 transition cursor-pointer">
-                        <i class="fas fa-wand-magic-sparkles"></i> Load Demo ZvZ Logs
-                    </button>
-                </div>
+                <p class="text-sm text-gray-400 leading-relaxed">Upload your CSV from AO Loot Logger.</p>
             </div>
         </section>
     </main>
@@ -663,7 +652,6 @@
         const $ = id => document.getElementById(id);
         const E = {
             dropzone: $('dropzone'), fileInput: $('file-input'),
-            btnLoadDemo: $('btn-load-demo'), btnEmptyDemo: $('btn-empty-demo'),
             btnPasteModal: $('btn-paste-modal'), btnClearAll: $('btn-clear-all'),
             btnToggleEdit: $('btn-toggle-edit'), btnExitEdit: $('btn-exit-edit'),
             editBanner: $('edit-mode-banner'),
@@ -1589,37 +1577,6 @@
                 renderAll(); showToast('All logs cleared', 'fa-trash-can text-rose-400');
             }
         });
-
-        // ═══════════════════════════════════════
-        // DEMO DATA LOADER
-        // ═══════════════════════════════════════
-        function loadDemoData() {
-            // Matches the real CSV format exactly
-            const demoCSV = `timestamp_utc;looted_by__alliance;looted_by__guild;looted_by__name;item_id;item_name;quantity;looted_from__alliance;looted_from__guild;looted_from__name;died;died_player_guild;killed_by;killed_by_guild;average_est_market_value;cluster
-2026-09-14T19:45:12Z;NFT;NoFreeThinkers;Vortex;T8_MAIN_HOLYSTAFF@2;Elder's Demonic Staff;1;POE;Crimson Dawn;BangerBoy;;;;460000;Caerleon
-2026-09-14T19:45:18Z;NFT;NoFreeThinkers;Vortex;T8_ARMOR_CLOTH_ROYAL@1;Elder's Royal Robe;1;POE;Crimson Dawn;BangerBoy;;;;280000;Caerleon
-2026-09-14T19:46:02Z;NFT;NoFreeThinkers;Vortex;T7_BAG@1;Expert's Bag;1;POE;Crimson Dawn;BangerBoy;;;;55000;Caerleon
-2026-09-14T19:46:55Z;NFT;NoFreeThinkers;Sujal;T8_2H_HALBERD@3;Elder's Halberd;1;ELEV;Elevate;TankLord;;;;1250000;Caerleon
-2026-09-14T19:47:10Z;NFT;NoFreeThinkers;Sujal;T8_ARMOR_PLATE_SET3@2;Elder's Plate Armor;1;ELEV;Elevate;TankLord;;;;380000;Caerleon
-2026-09-14T19:47:22Z;NFT;NoFreeThinkers;Sujal;T8_MOUNT_ARMORED_HORSE;Elder's Armored Horse;1;ELEV;Elevate;TankLord;Sujal;NoFreeThinkers;EnemyKiller;Arch;95000;Caerleon
-2026-09-14T19:48:05Z;NFT;NoFreeThinkers;Grimm;T8_MAIN_CURSEDSTAFF@1;Elder's Cursed Staff;1;SURF;Surfing;MageDead;;;;520000;Caerleon
-2026-09-14T19:48:15Z;NFT;NoFreeThinkers;Grimm;T7_HEAD_CLOTH_ROYAL;Grandmaster's Royal Cowl;1;SURF;Surfing;MageDead;Grimm;NoFreeThinkers;BladeMaster;Arch;75000;Caerleon
-2026-09-14T19:48:30Z;NFT;NoFreeThinkers;Grimm;T8_POTION_COOLDOWN@1;Elder's Cooldown Potion;5;SURF;Surfing;MageDead;;;;12000;Caerleon
-2026-09-14T19:49:10Z;NFT;NoFreeThinkers;ShadowStep;T8_2H_DUALDAGGER@2;Elder's Dual Swords;1;ARCH;Praise Be;GankMaster;;;;780000;Caerleon
-2026-09-14T19:49:22Z;NFT;NoFreeThinkers;ShadowStep;T7_SHOES_LEATHER_SET1;Grandmaster's Assassin Shoes;1;ARCH;Praise Be;GankMaster;;;;90000;Caerleon
-2026-09-14T19:49:35Z;NFT;NoFreeThinkers;ShadowStep;T8_CAPEITEM_MORGANA;Elder's Morgana Cape;1;ARCH;Praise Be;GankMaster;ShadowStep;NoFreeThinkers;ArchHunter;Arch;210000;Caerleon
-2026-09-14T19:50:05Z;NFT;NoFreeThinkers;Kael;T8_2H_MACE@2;Elder's Great Holy Mace;1;POE;Crimson Dawn;ClapOne;;;;890000;Caerleon
-2026-09-14T19:50:20Z;NFT;NoFreeThinkers;Kael;T8_ARMOR_PLATE_ROYAL;Elder's Royal Armor;1;POE;Crimson Dawn;ClapOne;;;;320000;Caerleon
-2026-09-14T19:50:35Z;NFT;NoFreeThinkers;Kael;T8_MEAL_STEW;Elder's Beef Stew;10;POE;Crimson Dawn;ClapOne;;;;4500;Caerleon
-2026-09-14T19:51:00Z;ELEV;Elevate;EnemyGanker;T8_2H_DUALDAGGER@2;Elder's Dual Swords;1;NFT;NoFreeThinkers;ShadowStep;;;;780000;Caerleon`;
-
-            parseLootCSV(demoCSV, 'ZvZ_CTA_2026-09-14.csv');
-            renderAll();
-            showToast('Demo ZvZ logs loaded — 2 ganked items detected!', 'fa-wand-magic-sparkles text-amber-400');
-        }
-
-        E.btnLoadDemo.addEventListener('click', loadDemoData);
-        E.btnEmptyDemo.addEventListener('click', loadDemoData);
 
         // ═══════════════════════════════════════
         // EXPORTS
