@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoFreeThinkers | Albion Loot Logger Viewer</title>
+    <meta name="title" content="NoFreeThinkers | Albion Loot Logger Viewer">
+    <meta name="description"
+        content="Albion Online ZvZ loot analysis tool. Parse loot CSVs, detect ganked items, view market values, filter by guild, and export Discord split reports.">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="NoFreeThinkers | Albion Loot Logger Viewer">
+    <meta name="theme-color" content="#fbbf24">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 119, 6, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+            z-index: -1;
+            filter: blur(45px);
+        }
+
+        .item-card {
+            position: relative;
+            background: radial-gradient(circle at center, rgba(31, 41, 55, 0.7) 0%, rgba(17, 24, 39, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .item-card:hover {
+            transform: translateY(-3px) scale(1.04);
+            border-color: rgba(251, 191, 36, 0.55);
+            box-shadow: 0 12px 30px -8px rgba(251, 191, 36, 0.2);
+            z-index: 20;
+        }
+
+        .item-card.status-deposited {
+            border-color: rgba(16, 185, 129, 0.45);
+            box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.15);
+        }
+
+        .item-card.status-deposited:hover {
+            border-color: rgba(16, 185, 129, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
+        }
+
+        .item-card.status-lost {
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: inset 0 0 12px rgba(239, 68, 68, 0.15);
+        }
+
+        .item-card.status-lost:hover {
+            border-color: rgba(239, 68, 68, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.3);
+        }
+
+        .item-card.status-ganked {
+            border-color: rgba(249, 115, 22, 0.6);
+            box-shadow: inset 0 0 12px rgba(249, 115, 22, 0.2);
+        }
+
+        .item-card.status-ganked:hover {
+            border-color: rgba(249, 115, 22, 0.9);
+            box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.35);
+        }
+
+        .item-card.status-deleted {
+            opacity: 0.25;
+            filter: grayscale(100%);
+            pointer-events: none;
+        }
+
+        .item-tooltip {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.18s, transform 0.18s;
+            transform: translateY(6px);
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .item-card:hover .item-tooltip {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .edit-mode .item-card {
+            cursor: pointer;
+        }
+
+        .edit-mode .item-card:not(.status-deleted):hover::after {
+            content: '✕ Remove';
+            position: absolute;
+            inset: 0;
+            background: rgba(239, 68, 68, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 11px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+        }
+
+        .row-ganked {
+            background: rgba(249, 115, 22, 0.07) !important;
+        }
+
+        .row-deleted {
+            opacity: 0.35;
+            text-decoration: line-through;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+            border: 2px solid #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+
+        .value-chip {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans selection:bg-amber-500 selection:text-black">
+
+    <div class="bg-glow top-[-10%] left-[-10%] animate-pulse"></div>
+    <div class="bg-glow bottom-[-10%] right-[-10%] animate-pulse" style="animation-duration: 9s;"></div>
+
+    <!-- Navigation -->
+    <header class="glass-nav fixed top-0 left-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-3 group">
+                <div
+                    class="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-gray-950 font-black shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                    NFT</div>
+                <span class="text-xl font-bold tracking-wider text-amber-400 uppercase">NoFreeThinkers</span>
+            </a>
+            <nav class="hidden md:flex space-x-6 lg:space-x-8 text-sm font-medium tracking-wide">
+                <a href="index.html" class="text-gray-300 hover:text-amber-400 transition-colors">Home</a>
+                <a href="index.html#stats" class="text-gray-300 hover:text-amber-400 transition-colors">Guild Stats</a>
+                <a href="members.html" class="text-gray-300 hover:text-amber-400 transition-colors">Members</a>
+                <a href="build.html" class="text-gray-300 hover:text-amber-400 transition-colors">Builds</a>
+                <a href="loot.html" class="text-amber-400 border-b-2 border-amber-400 pb-1">Loot Logger</a>
+                <a href="index.html#community"
+                    class="text-gray-300 hover:text-amber-400 transition-colors">Community</a>
+            </nav>
+            <div class="flex items-center gap-2">
+                <a href="https://discord.gg/yEegm7mdRT" target="_blank"
+                    class="relative inline-flex items-center p-0.5 overflow-hidden text-xs font-bold rounded-lg group bg-gradient-to-br from-amber-500 to-orange-600 hover:text-white text-white shadow-lg shadow-amber-500/20">
+                    <span
+                        class="relative px-3.5 py-2 transition-all duration-75 bg-gray-950 rounded-md group-hover:bg-opacity-0 flex items-center gap-1.5">
+                        <i class="fab fa-discord text-amber-400 group-hover:text-white"></i> DISCORD
+                    </span>
+                </a>
+                <button id="mobile-menu-btn" class="md:hidden text-gray-400 hover:text-amber-400 p-2"><i
+                        class="fas fa-bars text-xl"></i></button>
+            </div>
+        </div>
+        <div id="mobile-menu"
+            class="hidden md:hidden glass-nav border-t border-gray-800/80 px-4 pt-3 pb-4 space-y-2 text-sm font-medium">
+            <a href="index.html"
+                class="block px-3 py-2 rounded-lg text-gray-300 hover:bg-amber-500/10 hover:text-amber-400">Home</a>
+            <a href="members.html"
+                class="block px-3 py-2 rounded-lg text-gray-300 hover:bg-amber-500/10 hover:text-amber-400">Members</a>
+            <a href="build.html"
+                class="block px-3 py-2 rounded-lg text-gray-300 hover:bg-amber-500/10 hover:text-amber-400">Builds</a>
+            <a href="loot.html" class="block px-3 py-2 rounded-lg text-amber-400 bg-amber-500/10 font-bold">Loot
+                Logger</a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="flex-grow pt-24 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-7">
+
+        <!-- Hero -->
+        <div class="text-center space-y-3 pt-3">
+            <div
+                class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-4 py-1 rounded-full text-xs font-semibold text-amber-400 uppercase tracking-widest">
+                <i class="fas fa-coins"></i> ZvZ & CTA Loot Management
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
+                Albion <span
+                    class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent">Loot
+                    Logger</span> Viewer
+            </h1>
+            <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+                Upload your AO Loot Logger CSV export. Gank deaths are auto-detected, market values calculated, items
+                can be edited inline, and Discord split tables generated instantly.
+            </p>
+
+            <!-- Action Toolbar -->
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button id="btn-load-demo"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 hover:border-amber-400 transition cursor-pointer">
+                    <i class="fas fa-wand-magic-sparkles text-amber-400"></i> Load Demo Logs
+                </button>
+                <button id="btn-paste-modal"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-200 bg-gray-800/80 border border-gray-700 hover:border-gray-500 transition cursor-pointer">
+                    <i class="fas fa-clipboard text-amber-400"></i> Paste CSV / Raw Text
+                </button>
+                <button id="btn-toggle-edit"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-200 bg-gray-800/80 border border-gray-700 hover:border-purple-500 transition cursor-pointer"
+                    title="Toggle edit mode to remove individual items">
+                    <i class="fas fa-pencil text-purple-400"></i> Edit Log
+                </button>
+                <button id="btn-faq-modal"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-200 bg-gray-800/80 border border-gray-700 hover:border-gray-500 transition cursor-pointer">
+                    <i class="fas fa-circle-question text-sky-400"></i> FAQ
+                </button>
+                <div class="relative inline-block text-left" id="export-dropdown-wrapper">
+                    <button id="btn-export-menu"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-gray-200 bg-gray-800/80 border border-gray-700 hover:border-gray-500 transition cursor-pointer">
+                        <i class="fas fa-share-nodes text-emerald-400"></i> Export <i
+                            class="fas fa-chevron-down text-xs ml-0.5 text-gray-400"></i>
+                    </button>
+                    <div id="export-menu-items"
+                        class="hidden absolute right-0 mt-2 w-60 rounded-xl glass-panel shadow-2xl py-2 z-50 border border-gray-700/80 text-left">
+                        <button id="btn-copy-discord"
+                            class="w-full text-left px-4 py-2.5 text-xs text-gray-200 hover:bg-amber-500/15 hover:text-amber-300 flex items-center gap-2.5 transition">
+                            <i class="fab fa-discord text-indigo-400 text-sm"></i> Copy Discord Split Table
+                        </button>
+                        <button id="btn-export-csv"
+                            class="w-full text-left px-4 py-2.5 text-xs text-gray-200 hover:bg-amber-500/15 hover:text-amber-300 flex items-center gap-2.5 transition">
+                            <i class="fas fa-file-csv text-emerald-400 text-sm"></i> Download Summary CSV
+                        </button>
+                        <button id="btn-export-json"
+                            class="w-full text-left px-4 py-2.5 text-xs text-gray-200 hover:bg-amber-500/15 hover:text-amber-300 flex items-center gap-2.5 transition">
+                            <i class="fas fa-code text-amber-400 text-sm"></i> Export Raw JSON
+                        </button>
+                    </div>
+                </div>
+                <button id="btn-clear-all"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-rose-300 bg-rose-950/30 border border-rose-800/40 hover:bg-rose-900/40 transition cursor-pointer">
+                    <i class="fas fa-trash-can text-rose-400"></i> Clear
+                </button>
+            </div>
+
+            <!-- Edit Mode Banner -->
+            <div id="edit-mode-banner"
+                class="hidden mx-auto max-w-xl mt-2 px-4 py-2.5 rounded-xl border border-purple-500/50 bg-purple-950/30 text-xs text-purple-200 font-semibold flex items-center gap-3">
+                <i class="fas fa-pencil text-purple-400 text-sm animate-pulse"></i>
+                <span>Edit Mode Active — Click any item card to remove it from the split</span>
+                <button id="btn-exit-edit"
+                    class="ml-auto px-2.5 py-1 rounded bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 cursor-pointer transition text-[11px] font-bold">Done</button>
+            </div>
+        </div>
+
+        <!-- File Upload Dropzone -->
+        <section>
+            <div id="dropzone"
+                class="glass-panel p-6 sm:p-8 rounded-2xl border-2 border-dashed border-gray-700/80 hover:border-amber-500/60 hover:bg-amber-500/[0.03] transition-all duration-200 text-center cursor-pointer group">
+                <input type="file" id="file-input" multiple accept=".txt,.csv,.log" class="hidden" />
+                <div class="max-w-xl mx-auto space-y-3 pointer-events-none">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto group-hover:scale-110 group-hover:bg-amber-500/20 transition-transform">
+                        <i class="fas fa-cloud-arrow-up text-2xl"></i>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-bold text-gray-100">Drop AO Loot Logger CSV / Chest Logs /
+                        Player Lists</h3>
+                    <p class="text-xs sm:text-sm text-gray-400">Drag & drop or <span
+                            class="text-amber-400 font-semibold underline underline-offset-2">browse</span>. Accepts CSV
+                        exports from the AO Loot Logger tool.</p>
+                    <div class="flex flex-wrap items-center justify-center gap-2 pt-1 text-[11px] text-gray-500">
+                        <span class="bg-gray-800/70 px-2 py-0.5 rounded border border-gray-700/50"><i
+                                class="fas fa-file-csv mr-1 text-amber-400/70"></i> AO Loot Logger CSV
+                            (semicolon)</span>
+                        <span class="bg-gray-800/70 px-2 py-0.5 rounded border border-gray-700/50"><i
+                                class="fas fa-box-archive mr-1 text-emerald-400/70"></i> Albion Chest Logs</span>
+                        <span class="bg-gray-800/70 px-2 py-0.5 rounded border border-gray-700/50"><i
+                                class="fas fa-users mr-1 text-sky-400/70"></i> Player Filter Lists</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Guild Filter Banner -->
+        <section
+            class="glass-panel rounded-xl border border-amber-500/20 px-5 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div class="flex items-center gap-2 shrink-0">
+                <i class="fas fa-shield-halved text-amber-400"></i>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Guild Filter</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 flex-1">
+                <input type="text" id="guild-filter-input" value="NoFreeThinkers"
+                    class="px-3 py-1.5 rounded-lg bg-gray-900 border border-amber-500/40 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-xs font-bold text-amber-300 w-48 outline-none transition"
+                    placeholder="Guild name to filter..." />
+                <label class="flex items-center gap-1.5 text-xs font-semibold text-gray-300 cursor-pointer">
+                    <input type="checkbox" id="guild-filter-enabled" checked
+                        class="accent-amber-500 w-3.5 h-3.5 cursor-pointer" />
+                    Filter to this guild only
+                </label>
+                <span class="text-[11px] text-gray-500">• Hides players from other guilds / unguilded looters</span>
+            </div>
+            <div id="guild-filter-count" class="text-[11px] font-bold text-amber-400 shrink-0"></div>
+        </section>
+
+        <!-- KPI Telemetry -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="glass-panel p-4 rounded-xl border border-gray-800 col-span-1">
+                <div
+                    class="flex items-center justify-between text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Items Looted</span><i class="fas fa-shield-halved text-amber-400"></i>
+                </div>
+                <div class="text-2xl font-extrabold text-amber-400 mt-1.5" id="kpi-total-items">0</div>
+                <div class="text-[11px] text-gray-500 mt-0.5" id="kpi-files-count">0 files</div>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border border-gray-800">
+                <div
+                    class="flex items-center justify-between text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Players</span><i class="fas fa-users text-sky-400"></i>
+                </div>
+                <div class="text-2xl font-extrabold text-sky-400 mt-1.5" id="kpi-total-players">0</div>
+                <div class="text-[11px] text-gray-500 mt-0.5" id="kpi-avg-items">0 avg/player</div>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border border-gray-800">
+                <div
+                    class="flex items-center justify-between text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Deposited</span><i class="fas fa-box-open text-emerald-400"></i>
+                </div>
+                <div class="text-2xl font-extrabold text-emerald-400 mt-1.5" id="kpi-total-deposited">0</div>
+                <div class="text-[11px] text-emerald-500/80 mt-0.5" id="kpi-deposited-rate">0%</div>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border border-gray-800">
+                <div
+                    class="flex items-center justify-between text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Ganked / Lost</span><i class="fas fa-skull-crossbones text-orange-400"></i>
+                </div>
+                <div class="text-2xl font-extrabold text-orange-400 mt-1.5" id="kpi-total-ganked">0</div>
+                <div class="text-[11px] text-orange-400/70 mt-0.5" id="kpi-ganked-sub">0 killed by enemy</div>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border border-gray-800">
+                <div
+                    class="flex items-center justify-between text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Deleted</span><i class="fas fa-trash text-rose-400"></i>
+                </div>
+                <div class="text-2xl font-extrabold text-rose-400 mt-1.5" id="kpi-deleted">0</div>
+                <div class="text-[11px] text-rose-400/70 mt-0.5">removed from split</div>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.04]">
+                <div
+                    class="flex items-center justify-between text-gray-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Est. Value</span><i class="fas fa-sack-dollar text-amber-400"></i>
+                </div>
+                <div class="text-xl font-extrabold text-amber-400 mt-1.5 value-chip" id="kpi-total-value">0</div>
+                <div class="text-[11px] text-amber-500/80 mt-0.5">silver (market est.)</div>
+            </div>
+        </section>
+
+        <!-- Guild Value Summary Card -->
+        <section id="guild-value-card" class="hidden glass-panel rounded-2xl border border-amber-500/25 p-5 space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-landmark text-amber-400 text-lg"></i>
+                    <h2 class="font-extrabold text-base text-white">Guild Wealth Summary — <span id="guild-name-display"
+                            class="text-amber-400">NoFreeThinkers</span></h2>
+                </div>
+                <span class="text-[11px] text-gray-500 font-semibold">Est. market values from log</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div class="bg-gray-900/70 rounded-xl p-3 border border-gray-800">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Total Looted Value</div>
+                    <div class="text-lg font-extrabold text-amber-400 mt-1 value-chip" id="guild-total-value">0</div>
+                    <div class="text-[10px] text-gray-500">silver</div>
+                </div>
+                <div class="bg-gray-900/70 rounded-xl p-3 border border-gray-800">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Ganked / Lost Value</div>
+                    <div class="text-lg font-extrabold text-orange-400 mt-1 value-chip" id="guild-ganked-value">0</div>
+                    <div class="text-[10px] text-gray-500">silver (not secured)</div>
+                </div>
+                <div class="bg-gray-900/70 rounded-xl p-3 border border-gray-800">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Secured Value</div>
+                    <div class="text-lg font-extrabold text-emerald-400 mt-1 value-chip" id="guild-secured-value">0
+                    </div>
+                    <div class="text-[10px] text-gray-500">silver (deposited/held)</div>
+                </div>
+                <div class="bg-gray-900/70 rounded-xl p-3 border border-gray-800">
+                    <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Deleted / Excluded</div>
+                    <div class="text-lg font-extrabold text-rose-400 mt-1 value-chip" id="guild-deleted-value">0</div>
+                    <div class="text-[10px] text-gray-500">silver</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="glass-panel p-4 sm:p-5 rounded-2xl space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Search
+                        Player</label>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="filter-player-name" placeholder="Filter by player username..."
+                            class="w-full pl-8 pr-3 py-2 rounded-lg bg-gray-900/90 border border-gray-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-xs text-gray-100 placeholder-gray-500 transition outline-none" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Search
+                        Item / Tier</label>
+                    <div class="relative">
+                        <i class="fas fa-khanda absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="filter-item-name" placeholder="e.g. T8, Holy, Robe, Bag..."
+                            class="w-full pl-8 pr-3 py-2 rounded-lg bg-gray-900/90 border border-gray-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-xs text-gray-100 placeholder-gray-500 transition outline-none" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Item
+                        Status</label>
+                    <select id="filter-status"
+                        class="w-full px-3 py-2 rounded-lg bg-gray-900/90 border border-gray-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-xs text-gray-100 transition outline-none cursor-pointer">
+                        <option value="all">All Items</option>
+                        <option value="held">Held / Unresolved Only</option>
+                        <option value="deposited">Deposited to Chest Only</option>
+                        <option value="ganked">Ganked / Lost on Death</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Sort
+                        Order</label>
+                    <select id="sort-by"
+                        class="w-full px-3 py-2 rounded-lg bg-gray-900/90 border border-gray-700/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-xs text-gray-100 transition outline-none cursor-pointer">
+                        <option value="value-desc">Est. Market Value (High → Low)</option>
+                        <option value="count-desc">Total Items (High → Low)</option>
+                        <option value="name-asc">Player Name (A → Z)</option>
+                        <option value="ganked-desc">Most Ganked (High → Low)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- File Pills -->
+            <div id="file-pills-container" class="pt-2 border-t border-gray-800/80 hidden">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] text-gray-400 uppercase font-semibold tracking-wider mr-1">Files:</span>
+                    <div id="file-pills-list" class="flex flex-wrap items-center gap-1.5"></div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div
+                class="flex flex-wrap items-center justify-between gap-3 pt-2 text-[11px] border-t border-gray-800/60 text-gray-400">
+                <div class="flex flex-wrap items-center gap-4">
+                    <span class="flex items-center gap-1.5"><span
+                            class="w-3 h-3 rounded-full bg-amber-500 border border-amber-300"></span> In Bag /
+                        Held</span>
+                    <span class="flex items-center gap-1.5"><span
+                            class="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-300"></span>
+                        Deposited</span>
+                    <span class="flex items-center gap-1.5"><span
+                            class="w-3 h-3 rounded-full bg-orange-500 border border-orange-300"></span> Ganked (died
+                        with item)</span>
+                    <span class="flex items-center gap-1.5"><span
+                            class="w-3 h-3 rounded-full bg-rose-500 border border-rose-300"></span> Lost on Death</span>
+                    <span class="flex items-center gap-1.5"><span
+                            class="w-3 h-3 rounded-full bg-purple-500 border border-purple-300"></span> Manually
+                        Deleted</span>
+                </div>
+                <div id="filter-result-count" class="text-gray-400 font-medium">Showing 0 players</div>
+            </div>
+        </section>
+
+        <!-- Player Cards Container -->
+        <section id="players-loot-container" class="space-y-6">
+            <div id="empty-state" class="glass-panel p-12 rounded-2xl text-center space-y-4 max-w-lg mx-auto">
+                <div
+                    class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-2xl">
+                    <i class="fas fa-boxes-packing"></i></div>
+                <h3 class="text-xl font-bold text-white">No Loot Logs Loaded</h3>
+                <p class="text-sm text-gray-400 leading-relaxed">Upload your CSV from AO Loot Logger or click below to
+                    load sample demo data.</p>
+                <div class="flex justify-center gap-3 pt-2">
+                    <button id="btn-empty-demo"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-amber-500 to-orange-600 text-gray-950 hover:from-amber-400 hover:to-orange-500 shadow-lg shadow-amber-500/20 transition cursor-pointer">
+                        <i class="fas fa-wand-magic-sparkles"></i> Load Demo ZvZ Logs
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Paste Modal -->
+    <div id="modal-paste"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 hidden">
+        <div class="glass-panel max-w-2xl w-full rounded-2xl border border-gray-700 shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <div class="flex items-center gap-2"><i class="fas fa-clipboard text-amber-400"></i>
+                    <h3 class="font-bold text-base text-white">Paste Raw Log / Clipboard</h3>
+                </div>
+                <button id="modal-paste-close" class="text-gray-400 hover:text-white text-lg"><i
+                        class="fas fa-xmark"></i></button>
+            </div>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Log Format</label>
+                    <select id="paste-type-select"
+                        class="text-xs px-2.5 py-1 rounded bg-gray-900 border border-gray-700 text-gray-200 outline-none">
+                        <option value="auto">Auto Detect</option>
+                        <option value="loot-csv">AO Loot Logger CSV (semicolon)</option>
+                        <option value="chest">Albion Chest Log</option>
+                        <option value="players">Guild Members Filter List</option>
+                    </select>
+                </div>
+                <textarea id="paste-textarea" rows="12"
+                    placeholder="Paste your CSV log here...&#10;&#10;Example AO Loot Logger CSV:&#10;timestamp_utc;looted_by__alliance;looted_by__guild;looted_by__name;item_id;item_name;quantity;looted_from__alliance;looted_from__guild;looted_from__name;died;died_player_guild;killed_by;killed_by_guild;average_est_market_value;cluster&#10;2026-09-14T19:45:12Z;NFT;NoFreeThinkers;Vortex;T8_MAIN_HOLYSTAFF@2;Elder's Demonic Staff;1;POE;Crimson Dawn;BangerBoy;;;;450000;Caerleon"
+                    class="w-full p-3 rounded-xl bg-gray-950 border border-gray-700 text-xs font-mono text-gray-200 placeholder-gray-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none resize-none"></textarea>
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button id="modal-paste-cancel"
+                    class="px-4 py-2 rounded-lg text-xs font-semibold text-gray-400 hover:text-white">Cancel</button>
+                <button id="modal-paste-submit"
+                    class="px-5 py-2 rounded-lg text-xs font-bold text-gray-950 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-2 cursor-pointer">
+                    <i class="fas fa-check"></i> Parse & Load
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div id="modal-faq"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 hidden">
+        <div
+            class="glass-panel max-w-3xl w-full max-h-[88vh] overflow-y-auto rounded-2xl border border-gray-700 shadow-2xl p-6 sm:p-8 space-y-6">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <div class="flex items-center gap-2"><i class="fas fa-circle-question text-amber-400 text-xl"></i>
+                    <h3 class="font-bold text-lg text-white">How To Use Loot Logger Viewer</h3>
+                </div>
+                <button id="modal-faq-close" class="text-gray-400 hover:text-white text-lg"><i
+                        class="fas fa-xmark"></i></button>
+            </div>
+            <div class="space-y-5 text-sm text-gray-300">
+                <div class="space-y-2">
+                    <h4 class="font-bold text-amber-400 text-base flex items-center gap-2"><i
+                            class="fas fa-file-csv"></i> CSV Format (AO Loot Logger Export)</h4>
+                    <p class="text-xs text-gray-400">Supports the full AO Loot Logger semicolon-delimited export format
+                        with these columns:</p>
+                    <code
+                        class="block text-[10px] font-mono bg-gray-950 border border-gray-800 rounded-lg p-3 text-emerald-300 break-all leading-relaxed">
+                        timestamp_utc ; looted_by__alliance ; looted_by__guild ; looted_by__name ; item_id ; item_name ; quantity ; looted_from__alliance ; looted_from__guild ; looted_from__name ; died ; died_player_guild ; killed_by ; killed_by_guild ; average_est_market_value ; cluster
+                    </code>
+                    <p class="text-xs text-gray-400">The <code class="text-amber-300">died</code> column is used to
+                        auto-detect ganks — if the looter dies (appears in the <code class="text-amber-300">died</code>
+                        column) the item is flagged as <strong class="text-orange-400">Ganked / Lost</strong>.</p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-bold text-amber-400 text-base flex items-center gap-2"><i
+                            class="fas fa-skull-crossbones text-orange-400"></i> Gank Detection</h4>
+                    <p class="text-xs text-gray-400">When the log's <code class="text-amber-300">died</code> field
+                        matches the player who looted the item, that item is marked as <span
+                            class="text-orange-400 font-bold">Ganked</span> — meaning the player looted it but was then
+                        killed and lost it. These entries can be manually deleted from the split via Edit Mode.</p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-bold text-amber-400 text-base flex items-center gap-2"><i
+                            class="fas fa-pencil text-purple-400"></i> Edit Mode (Log Editing)</h4>
+                    <p class="text-xs text-gray-400">Click <strong>Edit Log</strong> in the toolbar to enter Edit Mode.
+                        In this mode, clicking any item card will remove it from the loot split calculation. Use this to
+                        clean up items that were not part of the official split (e.g. personal loot, items looted from
+                        guildmates).</p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-bold text-amber-400 text-base flex items-center gap-2"><i
+                            class="fas fa-sack-dollar text-amber-400"></i> Market Values</h4>
+                    <p class="text-xs text-gray-400">The <code class="text-amber-300">average_est_market_value</code>
+                        column is used to calculate estimated silver value per item. The Guild Value Summary card shows
+                        total, ganked, secured, and deleted values. These are estimates from the data at time of export
+                        and may not reflect live market prices.</p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-bold text-amber-400 text-base flex items-center gap-2"><i
+                            class="fas fa-shield-halved text-amber-400"></i> Guild Filter</h4>
+                    <p class="text-xs text-gray-400">The guild filter (default: <strong
+                            class="text-amber-300">NoFreeThinkers</strong>) restricts player cards to only members of
+                        the specified guild. Toggle it off to see all guilds that looted during the CTA.</p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-bold text-amber-400 text-base flex items-center gap-2"><i
+                            class="fab fa-discord text-indigo-400"></i> Discord Split Export</h4>
+                    <p class="text-xs text-gray-400">The Discord export includes a formatted table with silver values
+                        per player. Ganked and deleted items are excluded from the split totals automatically.</p>
+                </div>
+            </div>
+            <div class="flex justify-end pt-3 border-t border-gray-800">
+                <button id="modal-faq-done"
+                    class="px-5 py-2 rounded-lg text-xs font-bold text-gray-950 bg-amber-400 hover:bg-amber-300 transition cursor-pointer">Got
+                    it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"
+        class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div
+            class="glass-panel px-4 py-3 rounded-xl border border-amber-500/40 shadow-2xl flex items-center gap-3 text-xs font-semibold text-white">
+            <i id="toast-icon" class="fas fa-check-circle text-amber-400 text-base"></i>
+            <span id="toast-msg">Action completed</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="glass-nav border-t border-gray-800/80 mt-auto py-5 text-center text-xs text-gray-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2"><span class="font-bold text-amber-400">NoFreeThinkers</span><span>•
+                    Outlands Brotherhood</span></div>
+            <div>Albion Online is a registered trademark of Sandbox Interactive GmbH.</div>
+        </div>
+    </footer>
+
+    <script>
+        // ═══════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════
+        const State = {
+            entries: [],           // { id, filename, timestamp, alliance, guild, player, itemId, itemName, quantity, fromAlliance, fromGuild, from, died, diedGuild, killedBy, killedByGuild, marketValue, cluster, isGanked, isDeposited, isDeleted }
+            chestEntries: [],      // { id, source, timestamp, player, itemName, enchantment, quality, amount }
+            allowedPlayers: new Set(),
+            filesLoaded: new Set(),
+            fileFilters: {},
+            fileMetadata: {},      // filename -> { type: 'loot' | 'chest' | 'players', count: number }
+            editMode: false,
+            nextId: 1,
+            filters: { player: '', item: '', status: 'all', sort: 'value-desc' }
+        };
+
+        // ═══════════════════════════════════════
+        // DOM REFS
+        // ═══════════════════════════════════════
+        const $ = id => document.getElementById(id);
+        const E = {
+            dropzone: $('dropzone'), fileInput: $('file-input'),
+            btnLoadDemo: $('btn-load-demo'), btnEmptyDemo: $('btn-empty-demo'),
+            btnPasteModal: $('btn-paste-modal'), btnClearAll: $('btn-clear-all'),
+            btnToggleEdit: $('btn-toggle-edit'), btnExitEdit: $('btn-exit-edit'),
+            editBanner: $('edit-mode-banner'),
+            btnExportMenu: $('btn-export-menu'), exportMenuItems: $('export-menu-items'),
+            btnCopyDiscord: $('btn-copy-discord'), btnExportCsv: $('btn-export-csv'), btnExportJson: $('btn-export-json'),
+            btnFaqModal: $('btn-faq-modal'), modalFaq: $('modal-faq'), modalFaqClose: $('modal-faq-close'), modalFaqDone: $('modal-faq-done'),
+            modalPaste: $('modal-paste'), modalPasteClose: $('modal-paste-close'), modalPasteCancel: $('modal-paste-cancel'),
+            modalPasteSubmit: $('modal-paste-submit'), pasteTextarea: $('paste-textarea'), pasteTypeSelect: $('paste-type-select'),
+            filterPlayerName: $('filter-player-name'), filterItemName: $('filter-item-name'),
+            filterStatus: $('filter-status'), sortBy: $('sort-by'),
+            filePillsContainer: $('file-pills-container'), filePillsList: $('file-pills-list'),
+            filterResultCount: $('filter-result-count'),
+            playersContainer: $('players-loot-container'), emptyState: $('empty-state'),
+            guildFilterInput: $('guild-filter-input'), guildFilterEnabled: $('guild-filter-enabled'),
+            guildFilterCount: $('guild-filter-count'),
+            guildValueCard: $('guild-value-card'), guildNameDisplay: $('guild-name-display'),
+            guildTotalValue: $('guild-total-value'), guildGankedValue: $('guild-ganked-value'),
+            guildSecuredValue: $('guild-secured-value'), guildDeletedValue: $('guild-deleted-value'),
+            kpiTotalItems: $('kpi-total-items'), kpiFilesCount: $('kpi-files-count'),
+            kpiTotalPlayers: $('kpi-total-players'), kpiAvgItems: $('kpi-avg-items'),
+            kpiTotalDeposited: $('kpi-total-deposited'), kpiDepositedRate: $('kpi-deposited-rate'),
+            kpiTotalGanked: $('kpi-total-ganked'), kpiGankedSub: $('kpi-ganked-sub'),
+            kpiDeleted: $('kpi-deleted'), kpiTotalValue: $('kpi-total-value'),
+            toast: $('toast'), toastMsg: $('toast-msg'), toastIcon: $('toast-icon'),
+            mobileMenuBtn: $('mobile-menu-btn'), mobileMenu: $('mobile-menu')
+        };
+
+        // ═══════════════════════════════════════
+        // HELPERS
+        // ═══════════════════════════════════════
+        function formatSilver(n) {
+            if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
+            if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
+            if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+            return Math.round(n).toLocaleString();
+        }
+
+        function showToast(msg, icon = 'fa-check-circle text-amber-400') {
+            E.toastMsg.textContent = msg;
+            E.toastIcon.className = `fas ${icon} text-base`;
+            E.toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => E.toast.classList.add('translate-y-20', 'opacity-0'), 3200);
+        }
+
+        function parseItemTier(itemId) {
+            const m = String(itemId).match(/^T([1-8])_/i);
+            const tier = m ? parseInt(m[1], 10) : 4;
+            const enc = String(itemId).includes('@') ? parseInt(String(itemId).split('@')[1], 10) : 0;
+            return { tier, enc };
+        }
+
+        // Albion render API uses internal item IDs (e.g. T8_MAIN_HOLYSTAFF@2) — itemId from the CSV already contains the enchantment
+        function generateRenderUrl(item) {
+            const id = (item.itemId || '').trim();
+            if (!id) return '';
+            return `https://render.albiononline.com/v1/item/${id}.png?count=1&quality=1`;
+        }
+
+        // ═══════════════════════════════════════
+        // CSV PARSER — AO Loot Logger Export Format
+        // timestamp_utc;looted_by__alliance;looted_by__guild;looted_by__name;
+        // item_id;item_name;quantity;looted_from__alliance;looted_from__guild;
+        // looted_from__name;died;died_player_guild;killed_by;killed_by_guild;
+        // average_est_market_value;cluster
+        // ═══════════════════════════════════════
+        function parseLootCSV(rawText, sourceName = 'Pasted Input') {
+            // Strip UTF-8 BOM if present
+            rawText = rawText.replace(/^\uFEFF/, '');
+
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            let parsed = 0, skipped = 0;
+
+            for (const line of lines) {
+                if (line.startsWith('#') || line.startsWith('//')) continue;
+
+                const parts = line.split(';').map(p => p.trim());
+                // Skip header row — also handles BOM-prefixed headers
+                if (parts[0].replace(/^\uFEFF/, '') === 'timestamp_utc' || parts[3] === 'looted_by__name') continue;
+
+                // Need at least 10 columns
+                if (parts.length < 10) { skipped++; continue; }
+
+                const [
+                    timestamp, byAlliance, byGuild, byName,
+                    itemId, itemName, quantityStr,
+                    fromAlliance, fromGuild, fromName,
+                    died, diedGuild, killedBy, killedByGuild,
+                    marketValueStr, cluster
+                ] = parts;
+
+                const player = (byName || '').trim();
+                if (!player || !itemId || itemId.toUpperCase().includes('TRASH')) { skipped++; continue; }
+
+                const quantity = parseInt(quantityStr, 10) || 1;
+                const marketValue = parseFloat(marketValueStr) || 0;
+                const { tier, enc } = parseItemTier(itemId);
+
+                // Gank detection: if the `died` column matches the looter, they died with this item
+                const diedTrimmed = (died || '').trim();
+                const isGanked = !!(diedTrimmed && diedTrimmed.toLowerCase() === player.toLowerCase());
+
+                State.entries.push({
+                    id: State.nextId++,
+                    filename: sourceName,
+                    timestamp: timestamp || '',
+                    alliance: (byAlliance || '').trim(),
+                    guild: (byGuild || '').trim(),
+                    player: player,
+                    itemId: (itemId || '').trim(),
+                    itemName: (itemName || itemId || '').trim(),
+                    quantity,
+                    fromAlliance: (fromAlliance || '').trim(),
+                    fromGuild: (fromGuild || '').trim(),
+                    from: (fromName || '').trim(),
+                    died: diedTrimmed,
+                    diedGuild: (diedGuild || '').trim(),
+                    killedBy: (killedBy || '').trim(),
+                    killedByGuild: (killedByGuild || '').trim(),
+                    marketValue,
+                    totalValue: marketValue * quantity,
+                    cluster: (cluster || '').trim(),
+                    tier, enc,
+                    isGanked,
+                    isDeposited: false,
+                    isDeleted: false
+                });
+                parsed++;
+            }
+
+            State.filesLoaded.add(sourceName);
+            if (State.fileFilters[sourceName] === undefined) State.fileFilters[sourceName] = true;
+
+            return { parsed, skipped };
+        }
+
+        // ═══════════════════════════════════════
+        // CHEST LOG PARSER (Albion In-Game Chest Log Export & Clipboard)
+        // "Date" \t "Player" \t "Item" \t "Enchantment" \t "Quality" \t "Amount"
+        // ═══════════════════════════════════════
+        function parseChestLog(rawText, sourceName = 'Chest Log') {
+            rawText = rawText.replace(/^\uFEFF/, '');
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            let parsed = 0, skipped = 0;
+
+            for (const line of lines) {
+                if (line.startsWith('#') || line.startsWith('//')) continue;
+
+                const clean = line.replace(/["']/g, '').toLowerCase();
+                // Skip header row
+                if (clean.includes('date') && (clean.includes('player') || clean.includes('user')) && clean.includes('item')) {
+                    continue;
+                }
+
+                let date = '', player = '', item = '', enchant = 0, quality = 1, amount = 1;
+
+                if (line.includes('\t')) {
+                    const parts = line.split('\t').map(s => s.replace(/^"|"$/g, '').trim());
+                    if (parts.length >= 3) {
+                        date = parts[0] || '';
+                        player = parts[1] || '';
+                        item = parts[2] || '';
+                        enchant = parseInt(parts[3], 10) || 0;
+                        quality = parseInt(parts[4], 10) || 1;
+                        amount = parseInt(parts[5], 10);
+                        if (isNaN(amount)) amount = 1;
+                    }
+                } else if (line.includes(';')) {
+                    const parts = line.split(';').map(s => s.replace(/^"|"$/g, '').trim());
+                    if (parts.length >= 3) {
+                        date = parts[0] || '';
+                        player = parts[1] || '';
+                        item = parts[2] || '';
+                        enchant = parseInt(parts[3], 10) || 0;
+                        quality = parseInt(parts[4], 10) || 1;
+                        amount = parseInt(parts[5], 10);
+                        if (isNaN(amount)) amount = 1;
+                    }
+                } else if (line.includes(',')) {
+                    const parts = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+                    if (parts.length >= 3) {
+                        date = parts[0] || '';
+                        player = parts[1] || '';
+                        item = parts[2] || '';
+                        enchant = parseInt(parts[3], 10) || 0;
+                        quality = parseInt(parts[4], 10) || 1;
+                        amount = parseInt(parts[5], 10);
+                        if (isNaN(amount)) amount = 1;
+                    }
+                } else {
+                    // Regex for quoted space-delimited
+                    const m = line.match(/^"([^"]*)"\s+"([^"]*)"\s+"([^"]*)"(?:\s+"(\d*)")?(?:\s+"(\d*)")?(?:\s+"(-?\d*)")?/);
+                    if (m) {
+                        date = m[1]; player = m[2]; item = m[3];
+                        enchant = parseInt(m[4], 10) || 0;
+                        quality = parseInt(m[5], 10) || 1;
+                        amount = parseInt(m[6], 10);
+                        if (isNaN(amount)) amount = 1;
+                    } else {
+                        // Legacy text format: Player deposited/donated N Item
+                        const leg = line.match(/(?:\[?([\d\/\-:\s]+)\]?\s+)?([A-Za-z0-9_]+)\s+(?:deposited|donated)\s+(\d+)?\s*(.*?)(?:\s+into|\s*\((\d+)\)|$)/i);
+                        if (leg) {
+                            date = leg[1] || '';
+                            player = leg[2] || '';
+                            amount = parseInt(leg[3] || leg[5] || 1, 10);
+                            item = leg[4] || '';
+                        }
+                    }
+                }
+
+                player = (player || '').trim();
+                item = (item || '').trim();
+
+                // Albion chest log: negative amounts are withdrawals, skip them
+                if (!player || !item || amount <= 0) {
+                    skipped++;
+                    continue;
+                }
+
+                State.chestEntries.push({
+                    id: State.nextId++,
+                    source: sourceName,
+                    timestamp: date,
+                    player: player,
+                    itemName: item,
+                    enchantment: enchant,
+                    quality: quality,
+                    amount: amount
+                });
+                parsed++;
+            }
+
+            State.filesLoaded.add(sourceName);
+            if (State.fileFilters[sourceName] === undefined) State.fileFilters[sourceName] = true;
+            return { parsed, skipped };
+        }
+
+        // Chest log detector
+        function isChestLog(rawText) {
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return false;
+
+            const first = lines[0].replace(/["']/g, '').toLowerCase();
+            if (first.includes('date') && (first.includes('player') || first.includes('user') || first.includes('donated')) && (first.includes('item') || first.includes('amount'))) {
+                return true;
+            }
+
+            for (let i = 0; i < Math.min(lines.length, 5); i++) {
+                const line = lines[i];
+                if (line.toLowerCase().includes('deposited') || line.toLowerCase().includes('donated')) return true;
+                if (line.includes('\t')) {
+                    const parts = line.split('\t').map(s => s.replace(/^"|"$/g, '').trim());
+                    if (parts.length >= 5 && /\d/.test(parts[0]) && !isNaN(parseInt(parts[parts.length - 1], 10))) {
+                        return true;
+                    }
+                }
+                if (/^"[^"]+"\s+"[^"]+"\s+"[^"]+"/.test(line)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Player whitelist detector (single column of names or member list)
+        function isPlayerList(rawText) {
+            if (isChestLog(rawText)) return false;
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return false;
+            const first = lines[0].replace(/["']/g, '').trim();
+            if (/\d{1,2}\/\d{1,2}\/\d{2,4}/.test(first) || first.includes(';') || first.toLowerCase().includes('item')) return false;
+            return /^[A-Za-z0-9_]{3,24}$/.test(first);
+        }
+
+        // Main file parser dispatcher
+        function parseLogText(rawText, sourceName = 'Pasted Input', forcedType = 'auto') {
+            rawText = rawText.replace(/^\uFEFF/, '');
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return { type: 'unknown', parsed: 0, skipped: 0 };
+
+            const firstLine = lines[0];
+
+            // 1. AO Loot Logger CSV
+            if (forcedType === 'loot-csv' ||
+                firstLine.replace(/^\uFEFF/, '').startsWith('timestamp_utc') ||
+                (firstLine.includes(';') && firstLine.split(';').length >= 10)) {
+                const res = parseLootCSV(rawText, sourceName);
+                State.fileMetadata[sourceName] = { type: 'loot', count: res.parsed };
+                return { type: 'loot', ...res };
+            }
+
+            // 2. Albion Chest Log
+            if (forcedType === 'chest' || isChestLog(rawText)) {
+                const res = parseChestLog(rawText, sourceName);
+                State.fileMetadata[sourceName] = { type: 'chest', count: res.parsed };
+                return { type: 'chest', ...res };
+            }
+
+            // 3. Player Whitelist Filter List
+            if (forcedType === 'players' || isPlayerList(rawText)) {
+                let parsed = 0;
+                lines.forEach(p => {
+                    if (!p || p.startsWith('#') || p.startsWith('//')) return;
+                    let name = p;
+                    if (p.includes('\t')) {
+                        const parts = p.split('\t').map(s => s.replace(/^"|"$/g, '').trim());
+                        name = parts[1] || parts[0];
+                    } else if (p.includes(',')) {
+                        const parts = p.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+                        name = parts[1] || parts[0];
+                    }
+                    name = name.replace(/^"|"$/g, '').trim();
+                    if (name && /^[A-Za-z0-9_]{3,24}$/.test(name)) {
+                        State.allowedPlayers.add(name.toLowerCase());
+                        parsed++;
+                    }
+                });
+                State.filesLoaded.add(sourceName);
+                State.fileMetadata[sourceName] = { type: 'players', count: parsed };
+                if (State.fileFilters[sourceName] === undefined) State.fileFilters[sourceName] = true;
+                return { type: 'players', parsed, skipped: lines.length - parsed };
+            }
+
+            return { type: 'unknown', parsed: 0, skipped: lines.length };
+        }
+
+        // Match chest deposits to loot entries
+        function applyChestResolutions() {
+            // Reset deposited status on all entries before resolving
+            State.entries.forEach(e => { e.isDeposited = false; });
+
+            // Only use chest entries from active files
+            const activeChest = State.chestEntries.filter(c => State.fileFilters[c.source] !== false);
+            if (!activeChest.length) return;
+
+            const playerChestMap = {};
+            activeChest.forEach(c => {
+                const k = c.player.toLowerCase().trim();
+                if (!playerChestMap[k]) playerChestMap[k] = [];
+                playerChestMap[k].push({ ...c, remaining: c.amount });
+            });
+
+            State.entries.forEach(e => {
+                if (e.isDeleted) return;
+                const deposits = playerChestMap[e.player.toLowerCase().trim()];
+                if (!deposits || !deposits.length) return;
+
+                const eNameClean = e.itemName.toLowerCase().replace(/['"]/g, '').trim();
+                const eEnc = e.enc || 0;
+
+                // Pass 1: exact item name and matching enchantment
+                for (const d of deposits) {
+                    if (d.remaining <= 0) continue;
+                    const dNameClean = d.itemName.toLowerCase().replace(/['"]/g, '').trim();
+                    const dEnc = d.enchantment || 0;
+                    if (eNameClean === dNameClean && eEnc === dEnc) {
+                        e.isDeposited = true;
+                        d.remaining = Math.max(0, d.remaining - e.quantity);
+                        return;
+                    }
+                }
+
+                // Pass 2: substring / contains match with matching enchantment
+                for (const d of deposits) {
+                    if (d.remaining <= 0) continue;
+                    const dNameClean = d.itemName.toLowerCase().replace(/['"]/g, '').trim();
+                    const dEnc = d.enchantment || 0;
+                    if ((eNameClean.includes(dNameClean) || dNameClean.includes(eNameClean)) && eEnc === dEnc) {
+                        e.isDeposited = true;
+                        d.remaining = Math.max(0, d.remaining - e.quantity);
+                        return;
+                    }
+                }
+
+                // Pass 3: name match for resources / maps / runes / food where enchant is 0
+                for (const d of deposits) {
+                    if (d.remaining <= 0) continue;
+                    const dNameClean = d.itemName.toLowerCase().replace(/['"]/g, '').trim();
+                    if (eNameClean === dNameClean) {
+                        e.isDeposited = true;
+                        d.remaining = Math.max(0, d.remaining - e.quantity);
+                        return;
+                    }
+                }
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // FILTER & AGGREGATE
+        // ═══════════════════════════════════════
+        function getGuildFilter() {
+            if (!E.guildFilterEnabled.checked) return null;
+            return (E.guildFilterInput.value || '').trim().toLowerCase();
+        }
+
+        function getFilteredEntries() {
+            applyChestResolutions();
+            const guildFilter = getGuildFilter();
+            const playerSearch = State.filters.player.toLowerCase();
+            const itemSearch = State.filters.item.toLowerCase();
+            const statusFilter = State.filters.status;
+
+            return State.entries.filter(e => {
+                if (State.fileFilters[e.filename] === false) return false;
+                if (e.isDeleted) {
+                    // Deleted entries: only show in 'all' with muted styling; exclude from value calcs
+                    // Keep them for display but mark them
+                    return statusFilter === 'all' || statusFilter === 'deleted';
+                }
+                if (guildFilter && e.guild.toLowerCase() !== guildFilter) return false;
+                if (State.allowedPlayers.size > 0 && !State.allowedPlayers.has(e.player.toLowerCase())) return false;
+                if (playerSearch && !e.player.toLowerCase().includes(playerSearch) && !e.from.toLowerCase().includes(playerSearch)) return false;
+                if (itemSearch) {
+                    const match = e.itemName.toLowerCase().includes(itemSearch) ||
+                        e.itemId.toLowerCase().includes(itemSearch) ||
+                        `t${e.tier}`.includes(itemSearch);
+                    if (!match) return false;
+                }
+                if (statusFilter === 'held' && (e.isDeposited || e.isGanked)) return false;
+                if (statusFilter === 'deposited' && !e.isDeposited) return false;
+                if (statusFilter === 'ganked' && !e.isGanked) return false;
+                return true;
+            });
+        }
+
+        function aggregateByPlayer(entries) {
+            const map = {};
+            entries.forEach(e => {
+                if (!map[e.player]) {
+                    map[e.player] = { name: e.player, guild: e.guild, alliance: e.alliance, items: [], totalCount: 0, depositedCount: 0, gankedCount: 0, heldCount: 0, deletedCount: 0, totalValue: 0, gankedValue: 0, securedValue: 0, deletedValue: 0 };
+                }
+                const p = map[e.player];
+                p.items.push(e);
+                p.totalCount += e.quantity;
+                p.totalValue += e.totalValue;
+                if (e.isDeleted) {
+                    p.deletedCount += e.quantity;
+                    p.deletedValue += e.totalValue;
+                } else if (e.isDeposited) {
+                    p.depositedCount += e.quantity;
+                    p.securedValue += e.totalValue;
+                } else if (e.isGanked) {
+                    p.gankedCount += e.quantity;
+                    p.gankedValue += e.totalValue;
+                } else {
+                    p.heldCount += e.quantity;
+                    p.securedValue += e.totalValue;
+                }
+            });
+
+            let list = Object.values(map);
+
+            switch (State.filters.sort) {
+                case 'value-desc': list.sort((a, b) => b.totalValue - a.totalValue); break;
+                case 'count-desc': list.sort((a, b) => b.totalCount - a.totalCount); break;
+                case 'name-asc': list.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'ganked-desc': list.sort((a, b) => b.gankedCount - a.gankedCount); break;
+            }
+
+            return list;
+        }
+
+        // ═══════════════════════════════════════
+        // RENDER
+        // ═══════════════════════════════════════
+        function renderFilePills() {
+            if (State.filesLoaded.size <= 0) { E.filePillsContainer.classList.add('hidden'); return; }
+            E.filePillsContainer.classList.remove('hidden');
+            E.filePillsList.innerHTML = '';
+            State.filesLoaded.forEach(fn => {
+                const isActive = State.fileFilters[fn] !== false;
+                const meta = State.fileMetadata[fn] || { type: 'loot', count: 0 };
+                const pill = document.createElement('button');
+
+                let iconClass = 'fa-file-csv text-amber-400';
+                let typeLabel = '';
+                if (meta.type === 'chest') {
+                    iconClass = 'fa-box-archive text-emerald-400';
+                    typeLabel = ` (${meta.count} deposits)`;
+                } else if (meta.type === 'players') {
+                    iconClass = 'fa-users text-blue-400';
+                    typeLabel = ` (${meta.count} players)`;
+                } else if (meta.count > 0) {
+                    typeLabel = ` (${meta.count} items)`;
+                }
+
+                pill.className = `px-2.5 py-1 rounded-md text-[11px] font-semibold border transition flex items-center gap-1.5 cursor-pointer ${isActive ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-gray-900 text-gray-500 border-gray-800 hover:text-gray-300'}`;
+                pill.innerHTML = `<i class="fas ${isActive ? 'fa-check text-amber-400' : 'fa-times text-gray-600'} text-[10px]"></i><i class="fas ${iconClass} text-[10px]"></i><span>${fn}${typeLabel}</span>`;
+                pill.title = `Click to ${isActive ? 'disable' : 'enable'} this file`;
+                pill.addEventListener('click', () => { State.fileFilters[fn] = !isActive; renderAll(); });
+                E.filePillsList.appendChild(pill);
+            });
+        }
+
+        function renderKPIs(playersList) {
+            let totalItems = 0, deposited = 0, ganked = 0, deleted = 0, totalValue = 0, totalGuildValue = 0, gankedValue = 0, securedValue = 0, deletedValue = 0;
+            playersList.forEach(p => {
+                totalItems += p.totalCount;
+                deposited += p.depositedCount;
+                ganked += p.gankedCount;
+                deleted += p.deletedCount;
+                totalValue += p.totalValue;
+                gankedValue += p.gankedValue;
+                securedValue += p.securedValue;
+                deletedValue += p.deletedValue;
+            });
+
+            E.kpiTotalItems.textContent = totalItems.toLocaleString();
+            E.kpiFilesCount.textContent = `${State.filesLoaded.size} file(s)`;
+            E.kpiTotalPlayers.textContent = playersList.length;
+            E.kpiAvgItems.textContent = `${playersList.length > 0 ? (totalItems / playersList.length).toFixed(1) : 0} avg/player`;
+            E.kpiTotalDeposited.textContent = deposited.toLocaleString();
+            E.kpiDepositedRate.textContent = `${totalItems > 0 ? ((deposited / totalItems) * 100).toFixed(0) : 0}% rate`;
+            E.kpiTotalGanked.textContent = ganked.toLocaleString();
+            E.kpiGankedSub.textContent = `${formatSilver(gankedValue)} silver lost`;
+            E.kpiDeleted.textContent = deleted.toLocaleString();
+            E.kpiTotalValue.textContent = formatSilver(totalValue - deletedValue);
+            E.filterResultCount.textContent = `Showing ${playersList.length} player(s) • ${totalItems.toLocaleString()} item(s) • ${formatSilver(totalValue)} est. silver`;
+
+            // Guild summary card
+            if (playersList.length > 0) {
+                const gf = E.guildFilterInput.value.trim() || 'Guild';
+                E.guildNameDisplay.textContent = gf;
+                E.guildTotalValue.textContent = formatSilver(totalValue);
+                E.guildGankedValue.textContent = formatSilver(gankedValue);
+                E.guildSecuredValue.textContent = formatSilver(securedValue);
+                E.guildDeletedValue.textContent = formatSilver(deletedValue);
+                E.guildValueCard.classList.remove('hidden');
+
+                // Guild filter count
+                const guildFilter = getGuildFilter();
+                if (guildFilter) {
+                    const total = State.entries.filter(e => e.guild.toLowerCase() === guildFilter).length;
+                    E.guildFilterCount.textContent = `${total} entries matched`;
+                } else {
+                    E.guildFilterCount.textContent = '';
+                }
+            } else {
+                E.guildValueCard.classList.add('hidden');
+                E.guildFilterCount.textContent = '';
+            }
+        }
+
+        function renderPlayerCards(playersList) {
+            if (playersList.length === 0) {
+                E.playersContainer.innerHTML = '';
+                // Check if data exists but guild filter is hiding it
+                const gf = getGuildFilter();
+                const totalEntries = State.entries.length;
+                if (gf && totalEntries > 0) {
+                    const gfMatched = State.entries.filter(e => e.guild.toLowerCase() === gf).length;
+                    if (gfMatched === 0) {
+                        // Guild filter is active but no matches — show helpful message
+                        const helpMsg = document.createElement('div');
+                        helpMsg.className = 'glass-panel p-10 rounded-2xl text-center space-y-4 max-w-lg mx-auto';
+                        helpMsg.innerHTML = `
+                        <div class="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center mx-auto text-2xl"><i class="fas fa-filter"></i></div>
+                        <h3 class="text-xl font-bold text-white">Guild Filter Hiding All Results</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed"><strong class="text-orange-400">${totalEntries.toLocaleString()} entries</strong> were loaded but the guild filter <strong class="text-amber-400">"${E.guildFilterInput.value.trim()}"</strong> matched <strong class="text-rose-400">0 entries</strong>.</p>
+                        <p class="text-xs text-gray-500">Check the guild name spelling or uncheck the filter to see all guilds.</p>
+                        <div class="flex justify-center gap-3 pt-2">
+                            <button id="btn-disable-filter-help" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-orange-500 to-amber-600 text-gray-950 hover:from-orange-400 hover:to-amber-500 shadow-lg shadow-orange-500/20 transition cursor-pointer">
+                                <i class="fas fa-filter-circle-xmark"></i> Disable Guild Filter
+                            </button>
+                        </div>`;
+                        helpMsg.querySelector('#btn-disable-filter-help').addEventListener('click', () => {
+                            E.guildFilterEnabled.checked = false;
+                            renderAll();
+                        });
+                        E.playersContainer.appendChild(helpMsg);
+                        return;
+                    }
+                }
+                E.emptyState.classList.remove('hidden');
+                E.playersContainer.appendChild(E.emptyState);
+                return;
+            }
+            E.emptyState.classList.add('hidden');
+            E.playersContainer.innerHTML = '';
+
+            playersList.forEach(player => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel rounded-2xl border border-gray-800/80 p-5 sm:p-6 space-y-4 shadow-xl';
+                if (State.editMode) card.classList.add('edit-mode');
+
+                const mlUrl = `https://murderledger.com/players/${encodeURIComponent(player.name)}/ledger?show_kills=0&show_assists=0`;
+                const avatarSeed = encodeURIComponent(player.name);
+
+                // Build item rows for the edit table
+                const itemsHTML = player.items.map(item => {
+                    let statusClass = '';
+                    let statusIcon = 'fa-clock text-amber-400';
+                    let statusLabel = 'Held';
+                    if (item.isDeleted) { statusClass = 'status-deleted'; statusIcon = 'fa-trash text-purple-400'; statusLabel = 'Deleted'; }
+                    else if (item.isDeposited) { statusClass = 'status-deposited'; statusIcon = 'fa-check-circle text-emerald-400'; statusLabel = 'Deposited'; }
+                    else if (item.isGanked) { statusClass = 'status-ganked'; statusIcon = 'fa-skull-crossbones text-orange-400'; statusLabel = 'Ganked'; }
+
+                    const cdnUrl = generateRenderUrl(item);
+
+                    const gangInfo = item.isGanked ? `<div class="mt-0.5 text-orange-300 text-[9px] font-bold">Killed by: ${item.killedBy || 'Enemy'} ${item.killedByGuild ? `[${item.killedByGuild}]` : ''}</div>` : '';
+
+                    return `
+                    <div class="item-card ${statusClass} rounded-xl p-1.5 flex flex-col items-center justify-center cursor-pointer"
+                         data-entry-id="${item.id}" title="${item.itemName} x${item.quantity}">
+                        <div class="relative w-full aspect-square flex items-center justify-center overflow-hidden">
+                            <img src="${cdnUrl}" alt="${item.itemName}" loading="lazy"
+                                 class="w-full h-full object-contain filter drop-shadow" />
+                            ${item.quantity > 1 ? `<span class="absolute bottom-1 right-1 bg-black/85 text-amber-300 text-[10px] font-black px-1 rounded shadow">x${item.quantity}</span>` : ''}
+                            <span class="absolute top-1 left-1 bg-gray-950/80 text-[9px] font-bold text-gray-300 px-1 rounded border border-gray-700/50">${item.tier}.${item.enc}</span>
+                            ${item.isGanked && !item.isDeleted ? `<span class="absolute top-1 right-1 text-orange-400 text-[10px]"><i class="fas fa-skull-crossbones"></i></span>` : ''}
+                        </div>
+                        <div class="item-tooltip absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-60 p-3 rounded-xl bg-gray-900 border border-gray-700 shadow-2xl text-left pointer-events-none">
+                            <div class="font-bold text-xs text-white leading-tight">${item.itemName}</div>
+                            <div class="text-[10px] font-semibold mt-1 flex items-center gap-1"><i class="fas ${statusIcon}"></i> ${statusLabel} &times;${item.quantity}</div>
+                            ${item.from ? `<div class="text-[10px] text-gray-400 mt-0.5">From: ${item.from} ${item.fromGuild ? `[${item.fromGuild}]` : ''}</div>` : ''}
+                            ${item.marketValue > 0 ? `<div class="text-[10px] text-amber-300 mt-0.5 font-bold">Est. Value: ${formatSilver(item.totalValue)} silver</div>` : ''}
+                            ${gangInfo}
+                            ${item.cluster ? `<div class="text-[9px] text-gray-500 mt-0.5">Zone: ${item.cluster}</div>` : ''}
+                            <div class="text-[9px] text-gray-500 mt-0.5">${item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}</div>
+                            ${State.editMode && !item.isDeleted ? `<div class="mt-1.5 text-[10px] font-bold text-rose-400 border-t border-gray-800 pt-1">Click to remove from split</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+
+                card.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-800/80 pb-4">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500/20 to-orange-500/30 border border-amber-500/30 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${avatarSeed}" alt="${player.name}" class="w-8 h-8" />
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base sm:text-lg font-extrabold text-white">${player.name}</h3>
+                                <a href="${mlUrl}" target="_blank" class="text-gray-500 hover:text-amber-400 text-xs transition"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                ${player.guild ? `<span class="text-[11px] font-bold text-amber-400/80 bg-amber-500/10 border border-amber-500/25 px-1.5 py-0.5 rounded">${player.guild}</span>` : ''}
+                                ${player.alliance ? `<span class="text-[10px] font-bold text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded">[${player.alliance}]</span>` : ''}
+                            </div>
+                            <div class="text-[11px] text-gray-400 mt-0.5 flex flex-wrap gap-3">
+                                <span><strong class="text-amber-400">${formatSilver(player.totalValue)}</strong> silver total</span>
+                                ${player.gankedCount > 0 ? `<span class="text-orange-400"><i class="fas fa-skull-crossbones mr-1"></i>${player.gankedCount} ganked · <strong>${formatSilver(player.gankedValue)}</strong> lost</span>` : ''}
+                                ${player.securedValue > 0 ? `<span class="text-emerald-400"><i class="fas fa-check mr-1"></i><strong>${formatSilver(player.securedValue)}</strong> secured</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs shrink-0">
+                        <span class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700/80 text-gray-300 font-semibold flex items-center gap-1.5">
+                            <i class="fas fa-gem text-amber-400"></i> Total: <strong class="text-white">${player.totalCount}</strong>
+                        </span>
+                        ${player.gankedCount > 0 ? `<span class="px-3 py-1.5 rounded-lg bg-orange-950/40 border border-orange-800/40 text-orange-300 font-semibold flex items-center gap-1.5"><i class="fas fa-skull-crossbones text-orange-400"></i> Ganked: <strong>${player.gankedCount}</strong></span>` : ''}
+                        ${player.depositedCount > 0 ? `<span class="px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 font-semibold flex items-center gap-1.5"><i class="fas fa-box-open text-emerald-400"></i> Deposited: <strong>${player.depositedCount}</strong></span>` : ''}
+                        ${player.heldCount > 0 ? `<span class="px-3 py-1.5 rounded-lg bg-amber-950/30 border border-amber-800/30 text-amber-300 font-bold flex items-center gap-1.5"><i class="fas fa-clock text-amber-400"></i> Held: <strong>${player.heldCount}</strong></span>` : ''}
+                        ${player.deletedCount > 0 ? `<span class="px-3 py-1.5 rounded-lg bg-purple-950/40 border border-purple-800/40 text-purple-300 font-semibold flex items-center gap-1.5"><i class="fas fa-trash text-purple-400"></i> Deleted: <strong>${player.deletedCount}</strong></span>` : ''}
+                    </div>
+                </div>
+
+                <!-- Item Grid -->
+                <div class="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-12 gap-2 pt-1">
+                    ${itemsHTML}
+                </div>
+
+                <!-- Collapsible Audit Table -->
+                <div class="pt-2">
+                    <button class="btn-toggle-audit text-xs font-semibold text-gray-400 hover:text-amber-400 transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-chevron-right text-[10px] transition-transform"></i>
+                        <span>Audit Trail (${player.items.length} entries)</span>
+                    </button>
+                    <div class="audit-table-wrapper hidden mt-3 overflow-x-auto rounded-xl border border-gray-800">
+                        <table class="w-full text-left text-xs text-gray-300 divide-y divide-gray-800">
+                            <thead class="bg-gray-900/90 text-gray-400 text-[10px] uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-3 py-2 w-10 text-center">Act</th>
+                                    <th class="px-3 py-2">Timestamp</th>
+                                    <th class="px-3 py-2">Item</th>
+                                    <th class="px-3 py-2 text-center">Qty</th>
+                                    <th class="px-3 py-2">Victim / Source</th>
+                                    <th class="px-3 py-2">Cluster</th>
+                                    <th class="px-3 py-2 text-right">Est. Value</th>
+                                    <th class="px-3 py-2">Status</th>
+                                    <th class="px-3 py-2 text-center w-10">Del</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800/60 bg-gray-950/40">
+                                ${player.items.map(ev => `
+                                    <tr class="hover:bg-gray-800/30 transition ${ev.isGanked && !ev.isDeleted ? 'row-ganked' : ''} ${ev.isDeleted ? 'row-deleted' : ''}" data-row-entry-id="${ev.id}">
+                                        <td class="px-3 py-2 text-center">
+                                            <img src="https://render.albiononline.com/v1/item/${encodeURIComponent(ev.itemId)}.png?count=1&quality=1&size=217" alt="" class="w-7 h-7 object-contain inline-block" onerror="this.style.display='none'" />
+                                        </td>
+                                        <td class="px-3 py-2 text-gray-400 whitespace-nowrap">${ev.timestamp ? new Date(ev.timestamp).toLocaleString() : 'N/A'}</td>
+                                        <td class="px-3 py-2 font-medium text-white max-w-[180px] truncate">${ev.itemName}</td>
+                                        <td class="px-3 py-2 font-bold text-center">${ev.quantity}</td>
+                                        <td class="px-3 py-2 text-gray-400 whitespace-nowrap">${ev.from || '?'} ${ev.fromGuild ? `<span class="text-gray-500">[${ev.fromGuild}]</span>` : ''}</td>
+                                        <td class="px-3 py-2 text-gray-500 text-[10px]">${ev.cluster || ''}</td>
+                                        <td class="px-3 py-2 text-amber-400 font-bold value-chip text-right whitespace-nowrap">${ev.marketValue > 0 ? formatSilver(ev.totalValue) : '—'}</td>
+                                        <td class="px-3 py-2">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold
+                                                ${ev.isDeleted ? 'bg-purple-950 text-purple-300 border border-purple-800/50'
+                        : ev.isGanked ? 'bg-orange-950 text-orange-300 border border-orange-800/50'
+                            : ev.isDeposited ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/50'
+                                : 'bg-amber-950/60 text-amber-400 border border-amber-800/50'}">
+                                                ${ev.isDeleted ? 'Deleted' : ev.isGanked ? `Ganked by ${ev.killedBy || '?'}` : ev.isDeposited ? 'Deposited' : 'In Bag'}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <button class="btn-row-delete text-rose-400 hover:text-rose-200 transition cursor-pointer px-1.5 py-0.5 rounded hover:bg-rose-950/40 text-[11px] font-bold" data-entry-id="${ev.id}" title="${ev.isDeleted ? 'Restore entry' : 'Delete from split'}">
+                                                ${ev.isDeleted ? '<i class="fas fa-undo text-purple-400"></i>' : '<i class="fas fa-xmark"></i>'}
+                                            </button>
+                                        </td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+
+                // Audit toggle
+                const toggleBtn = card.querySelector('.btn-toggle-audit');
+                const auditWrapper = card.querySelector('.audit-table-wrapper');
+                const chevron = toggleBtn.querySelector('i');
+                toggleBtn.addEventListener('click', () => {
+                    auditWrapper.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-90');
+                });
+
+                // Row delete buttons in audit table
+                card.querySelectorAll('.btn-row-delete').forEach(btn => {
+                    btn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const entryId = parseInt(btn.dataset.entryId, 10);
+                        toggleDeleteEntry(entryId);
+                    });
+                });
+
+                // Edit mode item card click to delete
+                card.querySelectorAll('.item-card').forEach(itemEl => {
+                    itemEl.addEventListener('click', () => {
+                        if (!State.editMode) return;
+                        const entryId = parseInt(itemEl.dataset.entryId, 10);
+                        toggleDeleteEntry(entryId);
+                    });
+                });
+
+                E.playersContainer.appendChild(card);
+            });
+        }
+
+        function toggleDeleteEntry(entryId) {
+            const entry = State.entries.find(e => e.id === entryId);
+            if (!entry) return;
+            entry.isDeleted = !entry.isDeleted;
+            const action = entry.isDeleted ? 'removed from split' : 'restored to split';
+            showToast(`${entry.itemName} ${action}`, entry.isDeleted ? 'fa-trash text-purple-400' : 'fa-undo text-emerald-400');
+            renderAll();
+        }
+
+        function renderAll() {
+            renderFilePills();
+            const filtered = getFilteredEntries();
+            // Also include deleted entries in the player aggregation for display
+            const allVisible = [...filtered, ...State.entries.filter(e => e.isDeleted && State.fileFilters[e.filename] !== false)];
+            const deduped = [...new Map(allVisible.map(e => [e.id, e])).values()];
+            // Apply guild filter to deduped
+            const guildFilter = getGuildFilter();
+            const finalEntries = deduped.filter(e => {
+                if (guildFilter && e.guild.toLowerCase() !== guildFilter) return false;
+                const playerSearch = State.filters.player.toLowerCase();
+                if (playerSearch && !e.player.toLowerCase().includes(playerSearch)) return false;
+                const itemSearch = State.filters.item.toLowerCase();
+                if (itemSearch) {
+                    const match = e.itemName.toLowerCase().includes(itemSearch) || e.itemId.toLowerCase().includes(itemSearch) || `t${e.tier}`.includes(itemSearch);
+                    if (!match) return false;
+                }
+                return true;
+            });
+            const playersList = aggregateByPlayer(finalEntries);
+            renderKPIs(playersList);
+            renderPlayerCards(playersList);
+        }
+
+        // ═══════════════════════════════════════
+        // FILE HANDLING
+        // ═══════════════════════════════════════
+        async function handleFiles(fileList) {
+            let lootParsed = 0, chestParsed = 0, playersParsed = 0;
+            for (const file of fileList) {
+                const text = await file.text();
+                const res = parseLogText(text, file.name);
+                if (res.type === 'chest') chestParsed += res.parsed;
+                else if (res.type === 'players') playersParsed += res.parsed;
+                else lootParsed += res.parsed;
+            }
+
+            renderAll();
+
+            if (chestParsed > 0 && lootParsed > 0) {
+                showToast(`Loaded ${lootParsed} loot items & ${chestParsed} chest deposits!`, 'fa-check-circle text-emerald-400');
+            } else if (chestParsed > 0) {
+                const depCount = State.entries.filter(e => e.isDeposited).length;
+                showToast(`Loaded ${chestParsed} chest deposits (${depCount} loot items marked Deposited)`, 'fa-box-archive text-emerald-400');
+            } else if (playersParsed > 0) {
+                showToast(`Filtered to ${playersParsed} whitelisted players`, 'fa-users text-blue-400');
+            } else {
+                showToast(`Loaded ${fileList.length} file(s) — ${lootParsed} entries parsed`, 'fa-check-circle text-amber-400');
+            }
+
+            // After render, warn if guild filter is active but produced no results
+            setTimeout(() => {
+                const gf = getGuildFilter();
+                if (gf && State.entries.length > 0) {
+                    const matched = State.entries.filter(e => e.guild.toLowerCase() === gf).length;
+                    if (matched === 0) {
+                        showToast(`⚠ Guild filter "${E.guildFilterInput.value.trim()}" matched 0 of ${State.entries.length} entries — uncheck filter to see all`, 'fa-exclamation-triangle text-orange-400');
+                    }
+                }
+            }, 450);
+        }
+
+        E.dropzone.addEventListener('click', () => E.fileInput.click());
+        E.dropzone.addEventListener('dragover', e => { e.preventDefault(); E.dropzone.classList.add('border-amber-400', 'bg-amber-500/10'); });
+        E.dropzone.addEventListener('dragleave', () => E.dropzone.classList.remove('border-amber-400', 'bg-amber-500/10'));
+        E.dropzone.addEventListener('drop', e => { e.preventDefault(); E.dropzone.classList.remove('border-amber-400', 'bg-amber-500/10'); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+        E.fileInput.addEventListener('change', e => { if (e.target.files.length) handleFiles(e.target.files); });
+
+        // ═══════════════════════════════════════
+        // EDIT MODE
+        // ═══════════════════════════════════════
+        E.btnToggleEdit.addEventListener('click', () => {
+            State.editMode = !State.editMode;
+            E.editBanner.classList.toggle('hidden', !State.editMode);
+            E.btnToggleEdit.classList.toggle('border-purple-500', State.editMode);
+            E.btnToggleEdit.classList.toggle('bg-purple-900/20', State.editMode);
+            renderAll();
+            if (State.editMode) showToast('Edit Mode enabled — click items to remove from split', 'fa-pencil text-purple-400');
+        });
+        E.btnExitEdit.addEventListener('click', () => {
+            State.editMode = false;
+            E.editBanner.classList.add('hidden');
+            E.btnToggleEdit.classList.remove('border-purple-500', 'bg-purple-900/20');
+            renderAll();
+        });
+
+        // ═══════════════════════════════════════
+        // FILTERS
+        // ═══════════════════════════════════════
+        let debounceTimer;
+        function debouncedRender() { clearTimeout(debounceTimer); debounceTimer = setTimeout(renderAll, 180); }
+        E.filterPlayerName.addEventListener('input', e => { State.filters.player = e.target.value.trim(); debouncedRender(); });
+        E.filterItemName.addEventListener('input', e => { State.filters.item = e.target.value.trim(); debouncedRender(); });
+        E.filterStatus.addEventListener('change', e => { State.filters.status = e.target.value; renderAll(); });
+        E.sortBy.addEventListener('change', e => { State.filters.sort = e.target.value; renderAll(); });
+        E.guildFilterInput.addEventListener('input', debouncedRender);
+        E.guildFilterEnabled.addEventListener('change', renderAll);
+
+        // ═══════════════════════════════════════
+        // MODALS
+        // ═══════════════════════════════════════
+        E.btnFaqModal.addEventListener('click', () => E.modalFaq.classList.remove('hidden'));
+        E.modalFaqClose.addEventListener('click', () => E.modalFaq.classList.add('hidden'));
+        E.modalFaqDone.addEventListener('click', () => E.modalFaq.classList.add('hidden'));
+        E.btnPasteModal.addEventListener('click', () => { E.pasteTextarea.value = ''; E.modalPaste.classList.remove('hidden'); });
+        E.modalPasteClose.addEventListener('click', () => E.modalPaste.classList.add('hidden'));
+        E.modalPasteCancel.addEventListener('click', () => E.modalPaste.classList.add('hidden'));
+        E.modalPasteSubmit.addEventListener('click', () => {
+            const text = E.pasteTextarea.value.trim();
+            if (!text) return;
+            const forcedType = E.pasteTypeSelect ? E.pasteTypeSelect.value : 'auto';
+            const res = parseLogText(text, 'Pasted Log', forcedType);
+            E.modalPaste.classList.add('hidden');
+            renderAll();
+
+            if (res.type === 'chest') {
+                const depCount = State.entries.filter(e => e.isDeposited).length;
+                showToast(`Parsed ${res.parsed} chest deposits (${depCount} loot items marked Deposited)`, 'fa-box-archive text-emerald-400');
+            } else if (res.type === 'players') {
+                showToast(`Filtered to ${res.parsed} whitelisted players`, 'fa-users text-blue-400');
+            } else {
+                showToast(`Parsed ${res.parsed} loot entries from pasted log`, 'fa-check-circle text-amber-400');
+            }
+
+            setTimeout(() => {
+                const gf = getGuildFilter();
+                if (gf && State.entries.length > 0) {
+                    const matched = State.entries.filter(e => e.guild.toLowerCase() === gf).length;
+                    if (matched === 0) {
+                        showToast(`⚠ Guild filter "${E.guildFilterInput.value.trim()}" matched 0 entries — uncheck filter to see all`, 'fa-exclamation-triangle text-orange-400');
+                    }
+                }
+            }, 450);
+        });
+        E.mobileMenuBtn?.addEventListener('click', () => E.mobileMenu.classList.toggle('hidden'));
+        E.btnExportMenu.addEventListener('click', e => { e.stopPropagation(); E.exportMenuItems.classList.toggle('hidden'); });
+        document.addEventListener('click', () => E.exportMenuItems.classList.add('hidden'));
+
+        // ═══════════════════════════════════════
+        // CLEAR ALL
+        // ═══════════════════════════════════════
+        E.btnClearAll.addEventListener('click', () => {
+            if (!State.entries.length && !State.chestEntries.length && !State.allowedPlayers.size) return;
+            if (confirm('Clear all loaded logs and reset the viewer?')) {
+                State.entries = []; State.chestEntries = []; State.allowedPlayers.clear();
+                State.filesLoaded.clear(); State.fileFilters = {}; State.fileMetadata = {}; State.nextId = 1;
+                renderAll(); showToast('All logs cleared', 'fa-trash-can text-rose-400');
+            }
+        });
+
+        // ═══════════════════════════════════════
+        // DEMO DATA LOADER
+        // ═══════════════════════════════════════
+        function loadDemoData() {
+            // Matches the real CSV format exactly
+            const demoCSV = `timestamp_utc;looted_by__alliance;looted_by__guild;looted_by__name;item_id;item_name;quantity;looted_from__alliance;looted_from__guild;looted_from__name;died;died_player_guild;killed_by;killed_by_guild;average_est_market_value;cluster
+2026-09-14T19:45:12Z;NFT;NoFreeThinkers;Vortex;T8_MAIN_HOLYSTAFF@2;Elder's Demonic Staff;1;POE;Crimson Dawn;BangerBoy;;;;460000;Caerleon
+2026-09-14T19:45:18Z;NFT;NoFreeThinkers;Vortex;T8_ARMOR_CLOTH_ROYAL@1;Elder's Royal Robe;1;POE;Crimson Dawn;BangerBoy;;;;280000;Caerleon
+2026-09-14T19:46:02Z;NFT;NoFreeThinkers;Vortex;T7_BAG@1;Expert's Bag;1;POE;Crimson Dawn;BangerBoy;;;;55000;Caerleon
+2026-09-14T19:46:55Z;NFT;NoFreeThinkers;Sujal;T8_2H_HALBERD@3;Elder's Halberd;1;ELEV;Elevate;TankLord;;;;1250000;Caerleon
+2026-09-14T19:47:10Z;NFT;NoFreeThinkers;Sujal;T8_ARMOR_PLATE_SET3@2;Elder's Plate Armor;1;ELEV;Elevate;TankLord;;;;380000;Caerleon
+2026-09-14T19:47:22Z;NFT;NoFreeThinkers;Sujal;T8_MOUNT_ARMORED_HORSE;Elder's Armored Horse;1;ELEV;Elevate;TankLord;Sujal;NoFreeThinkers;EnemyKiller;Arch;95000;Caerleon
+2026-09-14T19:48:05Z;NFT;NoFreeThinkers;Grimm;T8_MAIN_CURSEDSTAFF@1;Elder's Cursed Staff;1;SURF;Surfing;MageDead;;;;520000;Caerleon
+2026-09-14T19:48:15Z;NFT;NoFreeThinkers;Grimm;T7_HEAD_CLOTH_ROYAL;Grandmaster's Royal Cowl;1;SURF;Surfing;MageDead;Grimm;NoFreeThinkers;BladeMaster;Arch;75000;Caerleon
+2026-09-14T19:48:30Z;NFT;NoFreeThinkers;Grimm;T8_POTION_COOLDOWN@1;Elder's Cooldown Potion;5;SURF;Surfing;MageDead;;;;12000;Caerleon
+2026-09-14T19:49:10Z;NFT;NoFreeThinkers;ShadowStep;T8_2H_DUALDAGGER@2;Elder's Dual Swords;1;ARCH;Praise Be;GankMaster;;;;780000;Caerleon
+2026-09-14T19:49:22Z;NFT;NoFreeThinkers;ShadowStep;T7_SHOES_LEATHER_SET1;Grandmaster's Assassin Shoes;1;ARCH;Praise Be;GankMaster;;;;90000;Caerleon
+2026-09-14T19:49:35Z;NFT;NoFreeThinkers;ShadowStep;T8_CAPEITEM_MORGANA;Elder's Morgana Cape;1;ARCH;Praise Be;GankMaster;ShadowStep;NoFreeThinkers;ArchHunter;Arch;210000;Caerleon
+2026-09-14T19:50:05Z;NFT;NoFreeThinkers;Kael;T8_2H_MACE@2;Elder's Great Holy Mace;1;POE;Crimson Dawn;ClapOne;;;;890000;Caerleon
+2026-09-14T19:50:20Z;NFT;NoFreeThinkers;Kael;T8_ARMOR_PLATE_ROYAL;Elder's Royal Armor;1;POE;Crimson Dawn;ClapOne;;;;320000;Caerleon
+2026-09-14T19:50:35Z;NFT;NoFreeThinkers;Kael;T8_MEAL_STEW;Elder's Beef Stew;10;POE;Crimson Dawn;ClapOne;;;;4500;Caerleon
+2026-09-14T19:51:00Z;ELEV;Elevate;EnemyGanker;T8_2H_DUALDAGGER@2;Elder's Dual Swords;1;NFT;NoFreeThinkers;ShadowStep;;;;780000;Caerleon`;
+
+            parseLootCSV(demoCSV, 'ZvZ_CTA_2026-09-14.csv');
+            renderAll();
+            showToast('Demo ZvZ logs loaded — 2 ganked items detected!', 'fa-wand-magic-sparkles text-amber-400');
+        }
+
+        E.btnLoadDemo.addEventListener('click', loadDemoData);
+        E.btnEmptyDemo.addEventListener('click', loadDemoData);
+
+        // ═══════════════════════════════════════
+        // EXPORTS
+        // ═══════════════════════════════════════
+        E.btnCopyDiscord.addEventListener('click', () => {
+            const guildFilter = getGuildFilter();
+            const entries = State.entries.filter(e => !e.isDeleted && (guildFilter ? e.guild.toLowerCase() === guildFilter : true));
+            const players = aggregateByPlayer(entries);
+            if (!players.length) { showToast('No data to export', 'fa-exclamation-triangle text-amber-400'); return; }
+
+            const guildName = E.guildFilterInput.value.trim() || 'Guild';
+            const date = new Date().toLocaleDateString();
+            let t = '```\n';
+            t += `ALBION LOOT SPLIT — ${guildName} | ${date}\n`;
+            t += `${'─'.repeat(70)}\n`;
+            t += `${'Player'.padEnd(18)} ${'Items'.padEnd(7)} ${'Deposited'.padEnd(10)} ${'Ganked'.padEnd(8)} ${'Est. Value'.padEnd(12)} Net\n`;
+            t += `${'─'.repeat(70)}\n`;
+            players.forEach(p => {
+                const netValue = p.securedValue; // value not ganked/deleted
+                t += `${p.name.padEnd(18)} ${String(p.totalCount).padEnd(7)} ${String(p.depositedCount).padEnd(10)} ${String(p.gankedCount).padEnd(8)} ${formatSilver(p.totalValue).padEnd(12)} ${formatSilver(netValue)}\n`;
+            });
+            t += `${'─'.repeat(70)}\n`;
+            const totItems = players.reduce((s, p) => s + p.totalCount, 0);
+            const totValue = players.reduce((s, p) => s + p.totalValue, 0);
+            t += `${'TOTAL'.padEnd(18)} ${String(totItems).padEnd(7)} ${' '.repeat(10)} ${' '.repeat(8)} ${formatSilver(totValue)}\n`;
+            t += '```';
+
+            navigator.clipboard.writeText(t).then(() => showToast('Discord table copied!', 'fa-clipboard-check text-indigo-400')).catch(() => prompt('Copy your split table:', t));
+        });
+
+        E.btnExportCsv.addEventListener('click', () => {
+            const guildFilter = getGuildFilter();
+            const entries = State.entries.filter(e => guildFilter ? e.guild.toLowerCase() === guildFilter : true);
+            if (!entries.length) { showToast('No data to export', 'fa-exclamation-triangle text-amber-400'); return; }
+            let csv = 'Player,Guild,Alliance,Timestamp,Item,Qty,From,Cluster,EstValue,TotalValue,Status\n';
+            entries.forEach(e => {
+                const status = e.isDeleted ? 'Deleted' : e.isGanked ? `Ganked(${e.killedBy})` : e.isDeposited ? 'Deposited' : 'Held';
+                csv += `"${e.player}","${e.guild}","${e.alliance}","${e.timestamp}","${e.itemName}",${e.quantity},"${e.from}","${e.cluster}",${e.marketValue},${e.totalValue},"${status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'NFT_Loot_Summary.csv'; document.body.appendChild(a); a.click(); a.remove();
+            showToast('CSV downloaded!', 'fa-file-csv text-emerald-400');
+        });
+
+        E.btnExportJson.addEventListener('click', () => {
+            const guildFilter = getGuildFilter();
+            const entries = State.entries.filter(e => guildFilter ? e.guild.toLowerCase() === guildFilter : true);
+            const data = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(entries, null, 2));
+            const a = document.createElement('a'); a.href = data; a.download = 'nft_loot_data.json'; document.body.appendChild(a); a.click(); a.remove();
+            showToast('JSON exported!', 'fa-code text-amber-400');
+        });
+
+        // Initial render
+        renderAll();
+    </script>
+</body>
+
+</html>
