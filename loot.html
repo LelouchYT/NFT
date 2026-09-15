@@ -764,6 +764,31 @@
                 const diedTrimmed = (died || '').trim();
                 const isGanked = !!(diedTrimmed && diedTrimmed.toLowerCase() === player.toLowerCase());
 
+                // Deduplication check: check if an identical item was looted by the same person from the same person within 90 seconds
+                let isDup = false;
+                const newTime = timestamp ? new Date(timestamp).getTime() : NaN;
+                const cleanItemId = (itemId || '').trim();
+                const cleanFrom = (fromName || '').trim();
+                
+                if (!isNaN(newTime)) {
+                    // Start from the end of the array (most recent entries first)
+                    for (let i = State.entries.length - 1; i >= 0; i--) {
+                        const e = State.entries[i];
+                        if (e.player === player && e.itemId === cleanItemId && e.quantity === quantity && e.from === cleanFrom) {
+                            const eTime = new Date(e.timestamp).getTime();
+                            if (!isNaN(eTime) && Math.abs(newTime - eTime) <= 90000) { // 90 seconds threshold
+                                isDup = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (isDup) {
+                    skipped++;
+                    continue;
+                }
+
                 State.entries.push({
                     id: State.nextId++,
                     filename: sourceName,
@@ -771,12 +796,12 @@
                     alliance: (byAlliance || '').trim(),
                     guild: (byGuild || '').trim(),
                     player: player,
-                    itemId: (itemId || '').trim(),
+                    itemId: cleanItemId,
                     itemName: (itemName || itemId || '').trim(),
                     quantity,
                     fromAlliance: (fromAlliance || '').trim(),
                     fromGuild: (fromGuild || '').trim(),
-                    from: (fromName || '').trim(),
+                    from: cleanFrom,
                     died: diedTrimmed,
                     diedGuild: (diedGuild || '').trim(),
                     killedBy: (killedBy || '').trim(),
