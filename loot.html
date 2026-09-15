@@ -763,7 +763,7 @@
                     // Start from the end of the array (most recent entries first)
                     for (let i = State.entries.length - 1; i >= 0; i--) {
                         const e = State.entries[i];
-                        if (e.player === player && e.itemId === cleanItemId && e.quantity === quantity && e.from === cleanFrom) {
+                        if (e.filename !== sourceName && e.player === player && e.itemId === cleanItemId && e.quantity === quantity && e.from === cleanFrom) {
                             const eTime = new Date(e.timestamp).getTime();
                             if (!isNaN(eTime) && Math.abs(newTime - eTime) <= 90000) { // 90 seconds threshold
                                 isDup = true;
